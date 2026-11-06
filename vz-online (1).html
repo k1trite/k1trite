@@ -1,0 +1,2391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VZ</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f6fa; --panel:#ffffff; --line:#e5e8f0; --text:#1d2233; --muted:#6b7288;
+  --gain:#0a9b6f; --loss:#e23a4f; --accent:#5b5bd6;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.4 "IBM Plex Sans",system-ui,sans-serif;
+  display:grid;grid-template-columns:200px minmax(0,1fr);min-height:100vh}
+body.rb-open{grid-template-columns:200px minmax(0,1fr) var(--rb-w,290px)}
+body.side-collapsed{grid-template-columns:64px minmax(0,1fr)}
+body.side-collapsed.rb-open{grid-template-columns:64px minmax(0,1fr) var(--rb-w,290px)}
+body.side-collapsed .side{padding:18px 8px;align-items:center}
+body.side-collapsed .brand{flex-direction:column;gap:12px;padding:6px 0 18px}
+body.side-collapsed .logo{width:36px;height:36px;font-size:13px}
+body.side-collapsed .side a{display:none}
+body.side-collapsed .side-add{width:40px;height:40px;padding:0;margin-bottom:14px;font-size:0}
+body.side-collapsed .side-add::before{content:"+";font-size:20px;line-height:1}
+body.side-collapsed .side-toggle{transform:rotate(180deg)}
+a{color:inherit}
+button{font:inherit;cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:8px 14px;border-radius:8px}
+button:hover{border-color:#c3c9d9}
+button:disabled{opacity:.6;cursor:default}
+button.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+button.blue{background:#4f6ef7;border-color:#4f6ef7;color:#fff;font-weight:600}
+button.mini{padding:4px 10px;font-size:12px}
+button:focus-visible,a:focus-visible,[role=button]:focus-visible,[role=tab]:focus-visible,summary:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,select,textarea{font:inherit;color:var(--text);background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%}
+select{width:auto}
+textarea{min-height:80px;resize:vertical}
+
+.side{padding:18px 12px;display:flex;flex-direction:column;gap:2px;position:sticky;top:0;height:100vh;background:linear-gradient(180deg,#3b2a7a 0%,#2c2f6e 55%,#1f2a5a 100%)}
+.brand{display:flex;justify-content:space-between;align-items:center;padding:6px 10px 22px}
+.side-toggle{border:none;background:rgba(255,255,255,.14);color:#fff;width:28px;height:28px;border-radius:8px;padding:0;display:grid;place-items:center;font-size:12px}
+.side-toggle:hover{background:rgba(255,255,255,.24);border:none}
+.logo{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:10px;background:linear-gradient(135deg,#7c6cf0,#4fb8e8);color:#fff;font:600 15px "IBM Plex Mono",monospace;letter-spacing:.5px}
+.side-add{width:100%;margin:0 0 14px;padding:10px;background:#5b5bd6;border:none;border-radius:10px;color:#fff;font-weight:600}
+.side-add:hover{background:#6b6be0;border:none}
+.side a{color:#cfc9ee;text-decoration:none;padding:8px 10px;border-radius:6px;display:flex;justify-content:space-between;align-items:center}
+.side a:hover{color:#fff;background:rgba(255,255,255,.08)}
+.side a.on{background:rgba(255,255,255,.16);color:#fff}
+.tag{font:500 10px "IBM Plex Mono",monospace;background:#e8e7ff;color:#4a43b5;padding:1px 6px;border-radius:99px}
+
+.main{padding:22px 28px 40px;min-width:0}
+.app-topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin:-22px -28px 18px;padding:12px 28px;background:#fff;border-bottom:1px solid var(--line)}
+.app-top-left{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.app-home{color:var(--accent);font-weight:600;font-size:13px;text-decoration:none}
+.app-home:hover{text-decoration:underline}
+.app-chips{display:flex;gap:8px;flex-wrap:wrap}
+.home-chips .app-chip{border-color:#232a35;color:#b6bdcb;background:#12161c}
+@media (max-width:1100px){.home-chips{display:none}}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+header h1{font-size:20px;font-weight:600;margin:0}
+header h1.big-title{font-size:30px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+.sub-head{color:var(--muted);font-size:13px}
+.hbtns{display:flex;gap:8px}
+
+.rightbar{display:none;padding:18px 16px;border-left:1px solid var(--line);background:var(--panel);height:100vh;position:sticky;top:0;overflow-y:auto}
+body.rb-open .rightbar{display:block}
+.acct-card{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px}
+.acct-card.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.acct-card input{font-weight:500;margin-bottom:8px}
+.acct-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+.acct-btns{display:flex;align-items:center;gap:4px}
+.acct-bar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.acct-bar label{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;min-width:0}
+h2{font-size:14px;font-weight:600;margin:0 0 12px}
+.label{color:var(--muted);font-size:13px;margin-bottom:8px}
+.big{font:500 26px "IBM Plex Mono",monospace;letter-spacing:-.5px}
+.pos{color:var(--gain)}
+.neg{color:var(--loss)}
+.flex{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sub{display:flex;justify-content:space-between;font:12px "IBM Plex Mono",monospace;color:var(--muted);margin-top:8px}
+.muted{color:var(--muted)}
+.n{text-align:right;font-family:"IBM Plex Mono",monospace}
+.hint{font-size:12px;color:var(--muted)}
+.empty-note{color:var(--muted);padding:28px 0;text-align:center}
+
+.stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.bar{height:6px;border-radius:99px;background:var(--loss);overflow:hidden;margin:14px 0 6px}
+.bar i{display:block;height:100%;background:var(--gain)}
+.row{display:grid;gap:12px;margin-bottom:12px}
+.r1{grid-template-columns:minmax(0,1fr) minmax(0,1.2fr)}
+.r2{grid-template-columns:minmax(0,1fr) minmax(0,1.6fr)}
+.r3{display:grid;gap:12px;grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:12px}
+
+svg{display:block;width:100%}
+.grid-line{stroke:var(--line);stroke-width:1}
+.axis-label{fill:var(--muted);font:11px "IBM Plex Sans",sans-serif}
+.axis-tick{fill:var(--muted);font:10px "IBM Plex Mono",monospace}
+
+.tabs{display:flex;gap:16px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.tabs span{padding:6px 0 10px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs span.on{color:var(--text);border-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{color:var(--muted);font-weight:500}
+tbody tr:hover td{background:#fafbfe}
+.x{border:none;background:none;color:var(--muted);padding:2px 6px;font-size:16px;line-height:1;border-radius:6px}
+.x:hover{color:var(--loss);background:#fdecee}
+
+.cal-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.cal-nav{display:flex;align-items:center;gap:10px}
+.cal-nav button{padding:4px 10px}
+.cal-title{font-weight:600;min-width:150px;text-align:center}
+.mstats{font:12px "IBM Plex Mono",monospace;color:var(--muted)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) 96px;gap:6px}
+.dow{color:var(--muted);font-size:12px;text-align:center;padding-bottom:2px}
+.day{min-height:68px;border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:11px "IBM Plex Mono",monospace;color:var(--muted);background:var(--panel)}
+.day.trade{cursor:pointer}
+.day.trade:hover{border-color:#c3c9d9}
+.day.g{background:rgba(10,155,111,.11);border-color:transparent}
+.day.l{background:rgba(226,58,79,.10);border-color:transparent}
+.day.sel{outline:2px solid var(--accent);outline-offset:-2px}
+.day.out{opacity:.3}
+.day .pl{display:block;font-size:12px;margin-top:8px;font-weight:500}
+.day .cnt{display:block;font-size:10px;color:var(--text);opacity:.65;margin-top:2px}
+.wk{border-left:1px solid var(--line);padding:6px 8px;font-size:12px;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.wk small{color:var(--muted)}
+.wk b{font:500 14px "IBM Plex Mono",monospace}
+.wk span{color:var(--muted);font-size:11px}
+.day-panel{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.day-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+
+.hrow{display:grid;grid-template-columns:64px 1fr 96px;gap:10px;align-items:center;padding:8px 0;font-size:13px;border-radius:6px}
+.hrow.wide{grid-template-columns:96px 1fr 96px}
+.hrow.clickable{cursor:pointer}
+.hrow.clickable:hover span{color:var(--accent)}
+.htrack{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+.htrack i{display:block;height:100%;border-radius:99px}
+
+.chip{display:inline-flex;gap:8px;align-items:center;background:#e8e7ff;color:#4a43b5;border-radius:99px;padding:3px 6px 3px 12px;font-size:12px}
+.chip button{border:none;background:none;color:#4a43b5;padding:0 4px;font-size:14px}
+.sumline{display:flex;gap:24px;flex-wrap:wrap;margin-bottom:14px}
+.sumline div{font-size:12px;color:var(--muted)}
+.sumline b{display:block;font:500 18px "IBM Plex Mono",monospace;color:var(--text);margin-top:2px}
+
+.jday{display:grid;grid-template-columns:170px minmax(0,1fr);gap:18px;padding:14px 0;border-bottom:1px solid var(--line)}
+.jday:last-child{border-bottom:none}
+.jday .d{font-weight:600}
+.jday .pl{font:500 14px "IBM Plex Mono",monospace;margin-top:4px}
+
+.model-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:14px}
+.model-card{text-align:left;display:grid;gap:6px;padding:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:var(--text);font:inherit}
+.model-card span{color:var(--muted);font-size:13px}
+.model-card:hover{border-color:var(--accent)}
+body.dash-view{background:#e7ecf8}
+body.dash-view header{display:none}
+.dash-band{background:#fff;border-bottom:1px solid #d9dfee;margin:-22px -28px 0;padding:16px 28px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(20,20,40,.05)}
+.dash-title{margin:0;font-size:20px;font-weight:600}
+.dash-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.acct-dd{position:relative}
+.acct-btn{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid var(--line);background:#fff;border-radius:8px;font:inherit;font-size:14px;font-weight:600;color:var(--text);cursor:pointer;transition:border-color .2s}
+.acct-btn:hover{border-color:var(--accent)}
+.acct-caret{color:var(--muted);font-size:11px}
+.acct-menu{position:absolute;right:0;top:calc(100% + 6px);min-width:220px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px rgba(20,24,40,.12);padding:6px;z-index:40}
+.acct-item{display:block;width:100%;padding:9px 12px;border:none;background:none;text-align:left;border-radius:8px;font:inherit;font-size:14px;color:var(--text);cursor:pointer}
+.acct-item:hover{background:#eef0ff}
+.acct-item.on{color:var(--accent);font-weight:600}
+.acct-group{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px;padding:0 12px;font-weight:600}
+.bulk{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px;background:#f7f8fc}
+.bulk-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.acct-head{display:flex;gap:8px;align-items:center}
+.acct-head input{flex:1}
+.acct-check{width:24px;height:24px;flex:none;border-radius:6px;border:1.5px solid #c3c9d9;background:#fff;color:#fff;font-size:13px;font-weight:700;padding:0;cursor:pointer}
+.acct-check.on{background:var(--accent);border-color:var(--accent)}
+.range-pick{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.range-pick label{display:flex;align-items:center;gap:6px}
+.range-pick input{width:auto;padding:5px 8px;font-size:12px}
+.dash-strip{background:#f4f6fc;border-bottom:1px solid #d9dfee;margin:0 -28px 18px;padding:10px 28px;display:flex;align-items:center;gap:14px;font-size:12px;color:var(--muted);flex-wrap:wrap}
+
+dialog{border:1px solid var(--line);border-radius:14px;padding:22px;width:min(480px,92vw);background:var(--panel);color:var(--text);box-shadow:0 20px 50px rgba(20,20,40,.18)}
+dialog::backdrop{background:rgba(20,22,35,.35)}
+dialog h2{font-size:16px}
+.field{display:grid;gap:6px;margin-bottom:12px;font-size:13px;color:var(--muted)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+.sess-mgr{margin-bottom:12px;font-size:13px}
+.sess-mgr summary{cursor:pointer;color:var(--muted);margin-bottom:8px}
+.sess-row{margin-bottom:6px}
+.sess-add{display:flex;gap:8px;margin-top:6px}
+.sess-add input{flex:1}
+.file-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px solid var(--line)}
+
+.psych{margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+.psych-title{font-weight:600;font-size:14px;margin-bottom:2px}
+.mood-row{display:flex;gap:6px;margin:10px 0 4px}
+.mood{flex:1;padding:6px 0;font-weight:600}
+.mood.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.emo-row{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.emo{padding:4px 9px;font-size:12px;border-radius:99px}
+.emo.on{background:#e8e7ff;color:#4a43b5;border-color:#c5c3f5}
+.psych-note{min-height:70px}
+.side{background:#000000;border-right:1px solid #161616;padding:18px 14px;gap:3px}
+.side .brand{padding:4px 6px 20px}
+.side .logo{background:#171b22;color:#fff;border:1px solid #2a313c;font-size:14px}
+.side .side-toggle{background:#171b22;border:1px solid #2a313c;color:#9aa3b2}
+.side .side-toggle:hover{background:#1f252e;border-color:#3a4351}
+.side-add{display:flex;align-items:center;gap:10px;text-align:left;width:100%;margin:0 0 16px;padding:10px 12px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.5);color:#4ade80;border-radius:8px;font-weight:600}
+.side-add:hover{background:rgba(34,197,94,.2);border-color:#4ade80}
+.side a{color:#8b93a3;padding:9px 10px;border-radius:8px;font-size:13.5px;display:flex;align-items:center;justify-content:flex-start;gap:10px}
+.side a:hover{color:#e5e9f0;background:#161b22}
+.side a.on{color:#fff;background:#1a2029}
+.side a.on .ic{color:#4ade80}
+.side a .tag{margin-left:auto}
+.ic{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.side .ic{color:#6b7385}
+.side .side-add .ic{color:#4ade80}
+.settings-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.side-tiles{margin-top:auto;border-top:1px solid #161616;padding-top:14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.side .side-tile{flex-direction:column;justify-content:center;gap:6px;padding:12px 4px;border:1px solid #232a35;border-radius:10px;background:#12161c;color:#9aa3b2;font-size:9px;letter-spacing:.08em;text-transform:uppercase;text-align:center}
+.side .side-tile:hover{color:#fff;border-color:#333d4c;background:#161b22}
+.side .side-tile .ic{width:16px;height:16px}
+body.side-collapsed .side-tiles{display:none}
+body.side-collapsed .side .side-add .ic{margin:0}
+body.side-collapsed .side-add::before{content:none}
+.prog-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+.prog-full{grid-column:1/-1}
+.big-sm{font:500 20px "IBM Plex Mono",monospace}
+.stage{margin-bottom:14px}
+.stage-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:4px}
+.rule-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.rule-row span{flex:1}
+.chk{width:24px;height:24px;border-radius:6px;border:1.5px solid #c3c9d9;background:#fff;padding:0;flex:none;display:grid;place-items:center;color:#fff;font-size:13px;font-weight:700}
+.chk.on{background:var(--gain);border-color:var(--gain)}
+.hm-grid{display:grid;grid-template-rows:repeat(7,12px);grid-auto-flow:column;grid-auto-columns:12px;gap:3px;overflow-x:auto;padding-bottom:4px}
+.hm{width:12px;height:12px;border-radius:3px;display:block}
+.adh-row{display:grid;grid-template-columns:minmax(0,1fr) 140px 44px;gap:10px;align-items:center;font-size:13px;padding:7px 0;border-bottom:1px solid var(--line)}
+.rp-grid{display:grid;gap:12px}
+.rp-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end}
+.rp-bar label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:180px}
+.rp-bar select,.rp-bar input{width:100%}
+.rp-chart{width:100%;height:360px}
+.rp-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.rp-controls input[type=range]{flex:1;min-width:160px;padding:0}
+.ch-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:12px}
+.ch-bar label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.ch-bar select,.ch-bar input{width:auto;min-width:140px}
+.seg{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff}
+.seg-btn{border:none;border-radius:0;padding:6px 10px;font-size:12px;background:#fff}
+.seg-btn+.seg-btn{border-left:1px solid var(--line)}
+.seg-btn.on{background:var(--accent);color:#fff}
+.ch-head{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.ch-price{font:500 22px "IBM Plex Mono",monospace}
+.ch-chart{width:100%;height:480px}
+.side-logout{margin-top:12px;width:100%;padding:9px;background:transparent;border:1px solid #2a313c;color:#9aa3b2;border-radius:8px}
+.side-logout:hover{color:#fff;border-color:#3a4351;background:transparent}
+.home{display:none;min-height:100vh;background:#0b0e13;color:#e5e9f0;font:14px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+body.signed-out{display:block;background:#0b0e13}
+body.signed-out .home{display:block}
+body.signed-out .side,body.signed-out .rightbar,body.signed-out .rb-tab,body.signed-out .rb-handle{display:none!important}
+body.signed-out .main{display:block;padding:0}
+body.signed-out .main > :not(#home){display:none!important}
+.home-nav{display:flex;justify-content:space-between;align-items:center;padding:20px 48px;border-bottom:1px solid #1b2028;position:sticky;top:0;z-index:5;background:#0b0e13}
+.home-links{display:flex;gap:22px;align-items:center}
+.home-links a{color:#9aa3b2;text-decoration:none}
+.home-links a:hover{color:#fff}
+.home-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:48px;padding:64px 48px;align-items:center}
+.eyebrow{color:#4ade80;text-transform:uppercase;letter-spacing:.12em;font-size:12px;font-weight:600;margin-bottom:14px}
+.home h1{font-size:56px;line-height:1.05;margin:0 0 18px;font-weight:700;letter-spacing:-.02em;color:#fff}
+.home-hero p{color:#9aa3b2;font-size:17px;max-width:520px;margin:0 0 26px}
+.hero-cta{display:flex;gap:10px;flex-wrap:wrap}
+.hero-cta button{padding:12px 20px;font-size:15px}
+.home .pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}
+.home .pills span{border:1px solid #232a35;background:#12161c;color:#b6bdcb;padding:6px 12px;border-radius:99px;font-size:12px}
+.login-card{background:#12161c;border:1px solid #232a35;border-radius:16px;padding:28px;box-shadow:0 24px 60px rgba(0,0,0,.35)}
+.login-card h2{color:#fff;font-size:20px;margin:0 0 18px}
+.login-card .field{color:#9aa3b2}
+.login-card input{background:#0d1014;border-color:#2a313c;color:#e5e9f0}
+.login-card .wide{width:100%;margin-top:6px}
+.login-logo{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.login-logo .logo{width:44px;height:44px;font-size:16px;box-shadow:0 8px 24px rgba(79,184,232,.25)}
+.wordmark{font-weight:800;letter-spacing:.28em;color:#fff;font-size:15px;line-height:1.1}
+.wordsub{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#7d8698;margin-top:3px}
+.back-home{display:inline-block;color:#ffffff;font-size:13px;text-decoration:none;margin-bottom:16px;transition:color .2s}
+.back-home:hover{color:#fff}
+.corner-left{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.corner-left .back-home{margin:0}
+.corner-left .login-logo{margin:0}
+.corner-left .login-logo .logo{background:#ffffff;color:#0b0e13;border-color:#ffffff;box-shadow:0 8px 24px rgba(255,255,255,.18)}
+.corner-left .wordmark{color:#ffffff}
+.corner-left .back-home{color:#ffffff}
+/* VZ mark: outlined glass tile with a soft glow, matching the website's pale, widely spaced wordmark */
+.vz-mark, .login-logo .logo, .home-nav .logo {
+  display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 12px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, .12), rgba(255, 255, 255, .02));
+  border: 1px solid rgba(233, 239, 255, .28); color: #ffffff;
+  font: 800 13px "Inter", system-ui, sans-serif; letter-spacing: .24em; text-indent: .24em;
+  box-shadow: 0 0 24px rgba(159, 216, 255, .18), inset 0 0 12px rgba(159, 216, 255, .08);
+}
+.wordmark { font-weight: 800; letter-spacing: .34em; color: #ffffff; font-size: 15px; line-height: 1.1; }
+.wordsub { font-size: 10px; letter-spacing: .22em; text-transform: uppercase; color: #9fd8ff; opacity: .75; margin-top: 4px; }
+.login-alt{margin-top:14px;font-size:13px;color:#9aa3b2;display:flex;gap:6px;align-items:center}
+.link{background:none;border:none;color:#4ade80;padding:0;font-weight:600}
+.home .hint{color:#7d8698;margin-top:12px}
+.home-features{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;padding:0 48px 48px}
+.feat{background:#12161c;border:1px solid #232a35;border-radius:14px;padding:20px;display:grid;gap:8px}
+.feat b{color:#fff;font-size:15px}
+.feat span{color:#8b93a3;font-size:13px}
+.home-foot{padding:0 48px 40px;color:#5f6777;font-size:12px}
+.home-steps,.home-more{padding:56px 48px 8px}
+.home-steps h2,.home-more h2{color:#fff;font-size:clamp(1.6rem,3vw,2.2rem);letter-spacing:-.02em;margin:12px 0 18px}
+.home-more p{color:#9aa3b2;margin:0;max-width:640px}
+.steps-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.step-card{background:#12161c;border:1px solid #232a35;border-radius:14px;padding:20px;display:grid;gap:8px}
+.step-card b{color:#fff;font-size:15px}
+.step-card span{color:#8b93a3;font-size:13px}
+@media (max-width:900px){.steps-grid{grid-template-columns:1fr}.home-steps,.home-more{padding:40px 24px 8px}}
+/* Login screen sidebar: logo, back to home, and links down the left edge */
+.home-nav{position:fixed;top:0;left:0;bottom:0;width:230px;z-index:20;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:26px;padding:26px 20px;border-bottom:none;border-right:1px solid #1b2028;background:#0b0e13;overflow-y:auto}
+.corner-left{flex-direction:column;align-items:flex-start;gap:14px}
+.home-links{flex-direction:column;align-items:flex-start;gap:12px}
+.home-links a{font-size:14px}
+.home-chips{flex-direction:column;align-items:flex-start}
+.home > :not(.home-nav){margin-left:0}
+.home-nav{display:none!important}
+body.signed-out .home-hero .hero-copy,body.signed-out .home-features,body.signed-out .home-steps,body.signed-out .home-more,body.signed-out .home-foot{display:none!important}
+body.signed-out .home-hero{grid-template-columns:1fr;max-width:440px;margin:0 auto;padding:120px 24px}
+@media (max-width:900px){.home-nav{position:sticky;top:0;bottom:auto;width:auto;flex-direction:row;align-items:center;justify-content:space-between;padding:16px 24px;border-right:none;border-bottom:1px solid #1b2028}.corner-left{flex-direction:row;align-items:center}.home-links{flex-direction:row}.home-chips{display:none}.home > :not(.home-nav){margin-left:0}}
+@media (max-width:900px){.home-hero{grid-template-columns:1fr;padding:40px 24px}.home h1{font-size:40px}.home-features{grid-template-columns:1fr 1fr;padding:0 24px 40px}.home-nav{padding:16px 24px}.home-foot{padding:0 24px 32px}}
+@media (max-width:1180px){.prog-grid{grid-template-columns:1fr}}
+.quote-card{background:#efeefe;border:1px solid #e0defa;border-radius:14px;padding:18px}
+.qc-quote{font:italic 20px/1.35 Georgia,"Times New Roman",serif;color:var(--text);margin-bottom:10px}
+.qc-by{font-size:12px;color:var(--muted);margin-bottom:14px}
+.qc-chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.qc-chip{background:#fff;border:1px solid #e2e0f5;border-radius:8px;padding:6px 10px;font-size:13px}
+.qc-chip.on{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.qc-tip{background:#fff;border-radius:10px;padding:10px 12px;font-size:13px;line-height:1.45;margin-bottom:12px}
+.qc-next{width:100%}
+.mini.danger{color:var(--loss)}
+.mini.danger:hover{border-color:var(--loss)}
+.rate-row{display:flex;gap:6px;margin:4px 0}
+.rate{flex:1;padding:6px 0;font-weight:600}
+.rate.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.ph-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);padding:5px 0;border-bottom:1px solid var(--line)}
+.rb-tab{position:fixed;right:0;top:50%;transform:translateY(-50%);width:30px;height:84px;border:1px solid var(--line);border-right:none;border-radius:10px 0 0 10px;background:var(--panel);color:var(--accent);display:grid;place-items:center;padding:0;box-shadow:-2px 0 10px rgba(20,20,40,.06);z-index:5}
+.rb-tab:hover{background:#f0f1ff;border-color:#c3c9d9}
+.rb-handle{display:none;position:fixed;top:0;bottom:0;right:var(--rb-w,290px);width:8px;margin-right:-4px;cursor:col-resize;z-index:4;background:transparent}
+.rb-handle:hover,.rb-handle.dragging{background:linear-gradient(90deg,transparent 3px,var(--accent) 3px,var(--accent) 5px,transparent 5px)}
+body.rb-open .rb-handle{display:block}
+@media (max-width:820px){.rb-handle{display:none!important}}
+body.rb-open .rb-tab{display:none}
+@media (max-width:1180px){
+  .r3{grid-template-columns:1fr}
+  .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .r1{grid-template-columns:1fr 1fr}
+}
+@media (max-width:820px){
+  body,body.rb-open{grid-template-columns:1fr}
+  .side,.rightbar{display:none}
+  .main{padding:16px}
+  .stats,.r1,.r2,.r3{grid-template-columns:1fr}
+  .cal{grid-template-columns:repeat(7,minmax(0,1fr));font-size:10px}
+  .wk{display:none}
+  .jday{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* Keep the confirm-password row hidden on the login view (the .field rule would otherwise override the hidden attribute) */
+#confirmWrap[hidden], #emailWrap[hidden], #altRow[hidden], #forgotRow[hidden] { display: none; }
+.auth-msg { font-size: 13px; color: #f87171; min-height: 1.2em; margin-top: 12px; line-height: 1.4; }
+.auth-msg.ok { color: #4ade80; }
+
+/* Trading psychology panel */
+.psych { margin-top: 6px; }
+.psych-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.psych-title { font-size: 15px; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
+.psych-count { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.mind-card { position: relative; overflow: hidden; border-radius: 16px; padding: 22px 22px 18px; background: linear-gradient(150deg, #5b5bd6 0%, #7c6cf0 55%, #4fb8e8 100%); color: #fff; box-shadow: 0 14px 30px rgba(91, 91, 214, .25); }
+.mind-card::after { content: ""; position: absolute; right: -40px; bottom: -60px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(255,255,255,.22), rgba(255,255,255,0) 70%); pointer-events: none; }
+.mind-mark { font-family: Georgia, "Times New Roman", serif; font-size: 56px; line-height: .6; height: 26px; opacity: .55; }
+.mind-quote { margin: 4px 0 18px; font-size: 16px; line-height: 1.5; font-weight: 600; letter-spacing: -.01em; position: relative; z-index: 1; }
+.mind-foot { display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1; }
+.mind-by { display: inline-flex; align-items: center; gap: 8px; font-size: 11px; letter-spacing: .18em; text-transform: uppercase; opacity: .9; }
+.mind-line { width: 18px; height: 1px; background: #fff; opacity: .8; display: inline-block; }
+.mind-next { border: 1px solid rgba(255,255,255,.45); background: rgba(255,255,255,.12); color: #fff; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(6px); transition: background .2s; }
+.mind-next:hover { background: rgba(255,255,255,.24); }
+.mind-prompt { margin: 18px 0 10px; font-size: 13px; color: var(--muted); font-weight: 600; }
+.mind-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.mind-chip { border: 1px solid var(--line); background: #fff; color: var(--text); border-radius: 999px; padding: 7px 13px; font: inherit; font-size: 13px; cursor: pointer; transition: all .2s; }
+.mind-chip:hover { border-color: var(--accent); }
+.mind-chip.on { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 6px 16px rgba(91, 91, 214, .25); }
+.mind-tip { margin-top: 14px; padding: 14px 16px; border-radius: 12px; background: #f4f5ff; border-left: 3px solid var(--accent); }
+.mind-tip-text { font-size: 14px; line-height: 1.55; color: var(--text); }
+.mind-tip-more { margin-top: 10px; border: none; background: none; color: var(--accent); font: inherit; font-size: 13px; font-weight: 600; padding: 0; cursor: pointer; }
+.mind-tip-more:hover { text-decoration: underline; }
+body.is-landing > :not(#landingFrame):not(script){display:none!important}
+
+/* Sidebar: tiles and log out match the black sidebar */
+.side .side-tile { background: #000000; border: 1px solid #222222; }
+.side .side-tile:hover { background: #0b0b0b; border-color: #3a3a3a; }
+.side-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 6px !important; }
+.side .side-tile { padding: 10px 2px !important; font-size: 8px !important; letter-spacing: .04em !important; }
+.side-logout { background: #000000 !important; border: 1px solid #222222 !important; }
+.side-logout:hover { background: #0b0b0b !important; border-color: #3a3a3a !important; }
+/* Trading psychology: plain white card, no blue */
+.mind-card { background: #ffffff !important; color: var(--text) !important; border: 1px solid var(--line) !important; box-shadow: none !important; }
+.mind-card::after { display: none !important; }
+.mind-mark { color: var(--accent) !important; opacity: .35 !important; }
+.mind-quote { font-weight: 500 !important; color: var(--text) !important; }
+.mind-by { color: var(--muted) !important; }
+.mind-line { background: var(--muted) !important; }
+.mind-next { background: #ffffff !important; color: var(--text) !important; border: 1px solid var(--line) !important; }
+.mind-next:hover { border-color: var(--accent) !important; color: var(--accent) !important; background: #ffffff !important; }
+
+/* Purple sidebar and right panel (the earlier colour) */
+.side { background: linear-gradient(180deg,#3b2a7a 0%,#2c2f6e 55%,#1f2a5a 100%) !important; border-right: none !important; }
+.side .side-tile { background: rgba(255,255,255,.07) !important; border: 1px solid rgba(255,255,255,.16) !important; color: #d9d4f5 !important; }
+.side .side-tile:hover { background: rgba(255,255,255,.14) !important; border-color: rgba(255,255,255,.3) !important; }
+.side-logout { background: rgba(255,255,255,.07) !important; border: 1px solid rgba(255,255,255,.2) !important; color: #d9d4f5 !important; }
+.side-logout:hover { background: rgba(255,255,255,.14) !important; border-color: rgba(255,255,255,.3) !important; }
+.rightbar { background: linear-gradient(180deg,#3b2a7a 0%,#2c2f6e 55%,#1f2a5a 100%) !important; border-left: none !important; }
+.rightbar .x { color: #d9d4f5 !important; }
+.rightbar .psych-title { color: #ffffff !important; }
+.rightbar .psych-count, .rightbar .mind-prompt { color: #d9d4f5 !important; }
+.rightbar .mind-tip { background: rgba(255,255,255,.12) !important; border-left-color: #ffffff !important; }
+.rightbar .mind-tip-text { color: #ffffff !important; }
+.rightbar .mind-tip-more { color: #ffffff !important; }
+.rightbar .mind-chip { background: rgba(255,255,255,.92) !important; }
+
+/* Charcoal sidebar and right panel, matching the reference colour */
+.side { background: #111317 !important; border-right: 1px solid #1c1f26 !important; }
+.rightbar { background: #111317 !important; border-left: 1px solid #1c1f26 !important; }
+
+/* Logo on the right panel */
+.rp-logo { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; border: 1px solid rgba(255,255,255,.25); background: rgba(255,255,255,.06); color: #ffffff; font: 800 12px "Inter", sans-serif; letter-spacing: .2em; text-indent: .2em; }
+/* Quote drops in above the chips */
+@keyframes mindDrop { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+.rightbar .mind-tip { animation: mindDrop .45s cubic-bezier(.2,.7,.1,1) both; margin: 0 0 14px; background: rgba(255,255,255,.1) !important; }
+.rightbar .mind-tip-label { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #cfc9ee; margin-bottom: 6px; font-weight: 600; }
+.rp-logo.light { color: #1d2233; border-color: #d9dde8; background: #ffffff; box-shadow: 0 2px 8px rgba(20,24,40,.06); }
+
+/* VZ lockup: glowing orb with a wordmark, for the sidebar */
+.vz-lockup { display: inline-flex; align-items: center; gap: 10px; }
+.vz-orb { width: 34px; height: 34px; border-radius: 50%; flex: none; background: radial-gradient(circle at 34% 30%, #ffffff 0, #b9cbe8 16%, #3a4660 50%, #0a0c12 78%, #050608 100%); box-shadow: 0 0 18px rgba(159,216,255,.35), inset -3px -5px 10px rgba(0,0,0,.65); }
+.vz-words { display: flex; flex-direction: column; }
+.vz-name { font: 800 17px/1 "Inter", system-ui, sans-serif; letter-spacing: .14em; color: #ffffff; }
+.vz-sub { font: 500 9px/1 "Inter", system-ui, sans-serif; letter-spacing: .4em; color: #9aa3b5; margin-top: 5px; }
+.vz-mark { width: 36px; height: 36px; flex: none; }
+.vz-sub { letter-spacing: .32em; }
+.vz-mark { width: 38px; height: 38px; flex: none; }
+.vz-name { font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif !important; font-size: 21px !important; font-weight: 600 !important; letter-spacing: .24em !important; background: linear-gradient(90deg, #f6e7bf 0%, #c9a152 50%, #f6e7bf 100%); -webkit-background-clip: text; background-clip: text; color: transparent !important; }
+.vz-sub { font-size: 7.5px !important; letter-spacing: .34em !important; color: #b9a77e !important; margin-top: 7px !important; font-weight: 500 !important; }
+/* VZ logo: frosted glass tile with a soft pale blue glow, matching the landing page */
+.vz-tile { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; flex: none; background: linear-gradient(160deg, rgba(255,255,255,.16), rgba(255,255,255,.03)); border: 1px solid rgba(255,255,255,.28); box-shadow: 0 0 22px rgba(159,216,255,.28), inset 0 0 12px rgba(159,216,255,.08); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.vz-tile-text { color: #ffffff; font: 700 13px/1 "Inter", system-ui, sans-serif; letter-spacing: .2em; text-indent: .2em; }
+.vz-mark { width: 38px; height: 38px; flex: none; overflow: visible; }
+.vz-name { font-family: Inter, system-ui, sans-serif !important; font-size: 18px !important; font-weight: 700 !important; letter-spacing: .3em !important; background: none !important; -webkit-text-fill-color: #e9efff; color: #e9efff !important; }
+.vz-sub { font-family: Inter, system-ui, sans-serif !important; font-size: 8px !important; font-weight: 500 !important; letter-spacing: .32em !important; color: #9fd8ff !important; opacity: .75; margin-top: 6px !important; }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<nav class="side" aria-label="Main">
+  <div class="brand" style="justify-content:space-between"><span class="vz-lockup" aria-label="VZ Trading Journal"><svg class="vz-mark" viewBox="0 0 48 48" aria-hidden="true"><rect x="8" y="28" width="6" height="12" fill="#9fd8ff"/><rect x="18" y="20" width="6" height="20" fill="#ffffff"/><rect x="28" y="12" width="6" height="28" fill="#9fd8ff"/><circle cx="40" cy="8" r="2.4" fill="#ffffff"/></svg><span class="vz-words"><span class="vz-name">VZ</span><span class="vz-sub">TRADING JOURNAL</span></span></span><button class="side-toggle" data-action="toggle-side" aria-controls="sideNav" aria-expanded="true" aria-label="Collapse sidebar">&#9664;</button></div>
+  <button class="side-add" data-action="add"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Add trade</button>
+  <a href="#" data-action="view" data-view="dashboard"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>Dashboard</a>
+  <a href="#" data-action="view" data-view="journal"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2z"/></svg>Daily journal</a>
+  <a href="#" data-action="view" data-view="data"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>Data collection</a>
+  <a href="#" data-action="view" data-view="trades"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/></svg>Trades</a>
+  <a href="#" data-action="view" data-view="accounts"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/></svg>Accounts</a>
+  <a href="#" data-action="view" data-view="notebook"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6M9 15h4"/></svg>Notebook</a>
+  <a href="#" data-action="view" data-view="reports"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Reports <span class="tag">New</span></a>
+  <a href="#" data-action="view" data-view="playbooks"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Playbooks <span class="tag">New</span></a>
+  <a href="#" data-action="view" data-view="progress"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>Progress tracker</a>
+  <a href="#" data-action="view" data-view="resources"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg>Resource center</a>
+  <div class="side-tiles">
+    <a class="side-tile" href="#" data-action="view" data-view="notebook"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 7h6M9 11h6"/></svg>Notes</a>
+    <a class="side-tile" href="#" data-action="view" data-view="resources"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6a2 2 0 0 1 2 2v14a2 2 0 0 0-2-2H4zM20 4h-6a2 2 0 0 0-2 2v14a2 2 0 0 1 2-2h6z"/></svg>Guide</a>
+    <a class="side-tile" href="#" data-action="view" data-view="settings"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Settings</a>
+  </div>
+  <button class="side-logout" data-action="logout">Log out</button>
+</nav>
+
+<main class="main">
+  <header>
+    <div>
+      <h1 id="title"></h1>
+      <div class="sub-head" id="subtitle"></div>
+    </div>
+    <div class="hbtns">
+      <button data-action="toggle-rb" aria-controls="rightbar" aria-expanded="false" id="rbToggle">Mindset</button>
+      <button class="blue" data-action="today">Start my day</button>
+    </div>
+  </header>
+  <div id="view"></div>
+</main>
+
+<aside class="rightbar" id="rightbar" aria-label="Accounts"></aside>
+<div class="rb-handle" id="rbHandle" role="separator" aria-orientation="vertical" aria-label="Drag to resize the right sidebar" title="Drag to resize"></div>
+<button class="rb-tab" data-action="toggle-rb" aria-label="Open right sidebar">
+  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 9V4h5M4 4l6 6M20 15v5h-5M20 20l-6-6M20 9V4h-5M20 4l-6 6M4 15v5h5M4 20l6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</button>
+
+<section id="home" class="home" aria-label="Welcome to VZ">
+  <header class="home-nav">
+    <div class="corner-left"><div class="login-logo"><span class="logo">VZ</span><div><div class="wordmark">VZ</div><div class="wordsub">Trading journal</div></div></div><a class="back-home" href="#home">&larr; Back to home</a></div>
+    <div class="app-chips home-chips">
+      <span class="app-chip">Session analytics</span>
+      <span class="app-chip">Mindset check-ins</span>
+      <span class="app-chip">Rule-based progress</span>
+      <span class="app-chip">Entry model tracking</span>
+    </div>
+    <nav class="home-links"><a href="#features">Features</a><a href="#loginForm" data-action="go-login">Log in</a></nav>
+  </header>
+  <div class="home-hero">
+    <div class="hero-copy">
+      <div class="eyebrow">Trading journal and discipline tracker</div>
+      <h1>Trade the plan.<br>Review the truth.</h1>
+      <p>Log every trade, rate your mindset, follow your rules, and see which setups really make money. VZ keeps you honest so the chart can teach you.</p>
+      <div class="hero-cta">
+        <button class="blue" data-action="go-login">Get started</button>
+        <button data-action="login-demo">Try the demo</button>
+      </div>
+      <div class="pills"><span>Session analytics</span><span>Mindset check-ins</span><span>Rule-based progress</span><span>Entry model tracking</span></div>
+    </div>
+    <form id="loginForm" class="login-card" aria-labelledby="loginTitle">
+      <a class="back-home" href="#home">&larr; Back to home</a>
+      <h2 id="loginTitle">Log in to VZ</h2>
+      <label class="field" id="emailWrap">Email<input name="email" type="email" required placeholder="you@example.com" autocomplete="email"></label>
+      <label class="field">Password<input name="password" type="password" required placeholder="Password" autocomplete="current-password"></label>
+      <label class="field" id="confirmWrap" hidden>Confirm password<input name="confirm" type="password" placeholder="Type the same password again" autocomplete="new-password"></label>
+      <button type="submit" class="primary wide" id="authSubmit">Log in</button>
+      <div id="authMsg" class="auth-msg" role="alert"></div>
+      <div class="login-alt" id="forgotRow"><button type="button" class="link" data-action="forgot">Forgot password?</button></div>
+      <div class="login-alt" id="altRow"><span id="altText">No account?</span><button type="button" class="link" id="altBtn" data-action="toggle-mode">Create account</button></div>
+      
+    </form>
+  </div>
+  <section id="features" class="home-features">
+    <div class="feat"><b>Journal every trade</b><span>Sessions, entry models, reflections, and files in one place.</span></div>
+    <div class="feat"><b>Track your mindset</b><span>Rate your focus and tag the emotions behind each trade.</span></div>
+    <div class="feat"><b>Find your edge</b><span>See performance by session, symbol, weekday, and model.</span></div>
+    <div class="feat"><b>Build consistency</b><span>Daily rules, a heat map, and streaks that reward discipline.</span></div>
+  </section>
+  <section class="home-steps">
+    <div class="kicker">How it works</div>
+    <h2>From a messy week to a clear plan</h2>
+    <div class="steps-grid">
+      <div class="step-card"><b>1. Log</b><span>Add each trade with its session, symbol, P&amp;L, entry model, and a reflection.</span></div>
+      <div class="step-card"><b>2. Check in</b><span>Rate your focus and tag the emotions behind each decision.</span></div>
+      <div class="step-card"><b>3. Review</b><span>Use analytics and the heat map to keep what works and stop what doesn't.</span></div>
+    </div>
+  </section>
+  <section class="home-more">
+    <div class="kicker">Built for traders</div>
+    <h2>Your trading record, kept in one place</h2>
+    <p>Multiple accounts, date-range filters, a daily discipline checklist, and CSV import and export.</p>
+  </section>
+  <footer class="home-foot">VZ · Trading journal</footer>
+</section>
+<input type="file" id="csvInput" accept=".csv,text/csv" hidden>
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <form id="tradeForm" method="dialog">
+    <h2 id="dlgTitle">Add a trade</h2>
+    <div class="grid2">
+      <label class="field">Symbol
+        <input name="sym" list="symList" placeholder="NVDA" required autocomplete="off">
+      </label>
+      <label class="field">Date <input name="date" type="date" required></label>
+    </div>
+    <datalist id="symList"></datalist>
+    <div class="grid2">
+      <label class="field">Account <select name="account" required></select></label>
+      <label class="field">Session <select name="session" required></select></label>
+    </div>
+    <details class="sess-mgr">
+      <summary>Rename or add sessions</summary>
+      <div id="sessionList"></div>
+      <div class="sess-add">
+        <input id="newSession" placeholder="New session name" aria-label="New session name">
+        <button type="button" data-action="add-session">Add</button>
+      </div>
+    </details>
+    <div class="grid2">
+      <label class="field">Net P&amp;L (USD)
+        <input name="pnl" type="number" step="1" placeholder="-150 or 320" required>
+      </label>
+      <label class="field">Entry model <select name="model"></select></label>
+    </div>
+    <div class="field">Mindset check
+      <div class="hint">How was your mindset? 1 is rough, 5 is sharp.</div>
+      <div class="rate-row" id="dlgRate"></div>
+      <div class="emo-row" id="dlgTags"></div>
+    </div>
+    <label class="field">Reflection
+      <textarea name="reflection" placeholder="What did you see, and what would you do differently?"></textarea>
+    </label>
+    <div class="field">Files
+      <input id="fileInput" type="file" multiple>
+      <div id="fileList"></div>
+    </div>
+    <div class="actions">
+      <button type="button" data-action="cancel">Cancel</button>
+      <button type="submit" class="primary">Save trade</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const KEY = "trade-journal-v4";
+const SYMS = ["AAPL","NFLX","MES","NVDA","TSLA","MNQ","AMD"];
+const DEFAULT_SESSIONS = ["New York","London","Asia","Sydney"];
+const TODAY = new Date(2026, 10, 4);
+const MAX_FILE_BYTES = 200 * 1024;
+const NAMES = {
+  settings:"Settings",
+  dashboard:"Dashboard", journal:"Daily journal", data:"Data collection", trades:"Trades", accounts:"Accounts", notebook:"Notebook", charts:"Charts",
+  reports:"Reports", playbooks:"Playbooks", progress:"Progress tracker", replay:"Trade replay", resources:"Resource center"
+};
+
+// ---------- helpers ----------
+const pad = n => String(n).padStart(2, "0");
+const iso = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseISO = s => { const [y, m, d] = s.split("-").map(Number); return new Date(y, m - 1, d); };
+const dt = s => { const d = parseISO(s); return `${pad(d.getMonth() + 1)}/${pad(d.getDate())}/${d.getFullYear()}`; };
+const fmt = n => (n < 0 ? "-" : "") + "$" + Math.abs(Math.round(n)).toLocaleString("en-US");
+const cls = n => (n >= 0 ? "pos" : "neg");
+const pct = n => (n * 100).toFixed(2) + "%";
+const div = (a, b) => (b ? a / b : 0);
+const sum = (arr, k = "pnl") => arr.reduce((s, x) => s + x[k], 0);
+const uid = () => Math.random().toString(36).slice(2, 9);
+const $ = s => document.querySelector(s);
+const escapeHTML = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const fileSize = b => (b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(0) + " KB" : (b / 1048576).toFixed(1) + " MB");
+const sortDesc = (a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0);
+function mulberry(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+function seed(sessions, accountId) {
+  const R = mulberry(42), days = [];
+  for (let i = 0; days.length < 520; i++) {
+    const d = new Date(TODAY); d.setDate(TODAY.getDate() - i);
+    if (d.getDay() % 6) days.unshift(d);
+  }
+  const trades = [];
+  for (const d of days) {
+    const n = 1 + Math.floor(R() * 3);
+    for (let i = 0; i < n; i++) {
+      trades.push({
+        id: uid(), date: iso(d), accountId,
+        sessionId: sessions[Math.floor(R() * sessions.length)].id,
+        sym: SYMS[Math.floor(R() * SYMS.length)],
+        pnl: Math.round((R() - 0.42) * 20000 / 5) * 5,
+        modelId: null, reflection: "", files: []
+      });
+    }
+  }
+  return trades;
+}
+
+// ---------- state ----------
+let state;
+function load() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY));
+    if (saved && Array.isArray(saved.trades)) {
+      const data = { trades: [], open: [], notes: {}, models: [], sessions: [], accounts: [], psych: [], rules: [], checks: {}, rulesInit: false, candles: {}, ...saved };
+      const fallback = data.accounts[0] ? data.accounts[0].id : "";
+      data.trades.forEach(t => { if (!t.accountId) t.accountId = fallback; });
+      data.open.forEach(o => { if (!o.accountId) o.accountId = fallback; });
+      return data;
+    }
+  } catch (e) {}
+  const sessions = DEFAULT_SESSIONS.map(name => ({ id: uid(), name }));
+  const accounts = [{ id: uid(), name: "Main account" }];
+  return {
+    trades: seed(sessions, accounts[0].id),
+    open: [
+      { id: uid(), accountId: accounts[0].id, sym: "NVDA", size: "40 sh", pl: 412 },
+      { id: uid(), accountId: accounts[0].id, sym: "MES", size: "3 ct", pl: -95 },
+      { id: uid(), accountId: accounts[0].id, sym: "TSLA", size: "15 sh", pl: 138 }
+    ],
+    notes: {}, models: [], sessions, accounts, psych: [], rules: [], checks: {}, rulesInit: false, candles: {}
+  };
+}
+function save() {
+  scheduleCloudSave();
+  try {
+    localStorage.setItem(KEY, JSON.stringify({
+      trades: state.trades, open: state.open, notes: state.notes, models: state.models,
+      sessions: state.sessions, accounts: state.accounts, psych: state.psych, lastImport: state.lastImport, rules: state.rules, checks: state.checks, rulesInit: state.rulesInit, candles: state.candles
+    }));
+  } catch (e) {}
+}
+const sessionName = id => { const s = state.sessions.find(x => x.id === id); return s ? (s.name || "Untitled session") : "No session"; };
+const modelName = id => { const m = state.models.find(x => x.id === id); return m ? (m.name || "Untitled") : "—"; };
+const accountName = id => { const a = state.accounts.find(x => x.id === id); return a ? (a.name || "Untitled account") : "—"; };
+
+const ui = {
+  view: "dashboard", modelId: null, filter: null, selectedDay: null, dashTab: "recent",
+  calY: TODAY.getFullYear(), calM: TODAY.getMonth(), dlgFiles: [],
+  accountId: "all", acctOpen: false, selectMode: false, selected: [], confirmBulk: false, rbOpen: false, sideOpen: true, rbWidth: 290, quoteIdx: TODAY.getDate() % 6, tip: null, tipIdx: 0, confirmDay: null, rangeFrom: "", rangeTo: "", progDay: "", authMode: "login", rp: { tradeId: "", idx: 0, playing: false, speed: 1, timer: null, chart: null, series: null, msg: "" }, ch: { sym: "", tf: "5m", range: "1M", type: "candle", chart: null, series: null }, authed: false, dlgPsych: { rating: 0, tags: [] }
+};
+const inScope = x => ui.accountId === "all" || x.accountId === ui.accountId;
+const inRange = t => (!ui.rangeFrom || t.date >= ui.rangeFrom) && (!ui.rangeTo || t.date <= ui.rangeTo);
+const scoped = () => state.trades.filter(inScope).filter(inRange);
+
+// ---------- derived data ----------
+function dayList(trades) {
+  const map = new Map();
+  trades.forEach(t => {
+    const v = map.get(t.date) || { iso: t.date, pl: 0, n: 0 };
+    v.pl += t.pnl; v.n++; map.set(t.date, v);
+  });
+  return [...map.values()].sort((a, b) => (a.iso < b.iso ? -1 : 1));
+}
+
+function metrics(trades) {
+  const wins = trades.filter(t => t.pnl > 0), losses = trades.filter(t => t.pnl < 0);
+  const net = sum(trades), gW = sum(wins), gL = Math.abs(sum(losses));
+  const days = dayList(trades);
+  const cum = []; let c = 0; days.forEach(d => { c += d.pl; cum.push(c); });
+  let peak = 0, dd = 0; cum.forEach(v => { peak = Math.max(peak, v); dd = Math.max(dd, peak - v); });
+  const winRate = div(wins.length, trades.length);
+  const pf = div(gW, gL);
+  const avgW = div(gW, wins.length), avgL = div(gL, losses.length), awl = div(avgW, avgL);
+  const dayWin = div(days.filter(d => d.pl > 0).length, days.length);
+  return { wins, losses, net, gW, gL, days, cum, winRate, pf, avgW, avgL, awl, dayWin };
+}
+
+// ---------- components ----------
+function ring(p, color) {
+  const r = 18, c = 2 * Math.PI * r;
+  return `<svg viewBox="0 0 48 48" width="52" height="52" aria-hidden="true">
+    <circle cx="24" cy="24" r="${r}" fill="none" stroke="var(--line)" stroke-width="5"/>
+    <circle cx="24" cy="24" r="${r}" fill="none" stroke="${color}" stroke-width="5" stroke-linecap="round"
+      stroke-dasharray="${(c * Math.min(p, 1)).toFixed(2)} ${c.toFixed(2)}" transform="rotate(-90 24 24)"/></svg>`;
+}
+
+function statsHTML(m, count) {
+  return `<section class="stats">
+    <div class="card"><div class="label">Net P&amp;L <span class="tag">${count}</span></div>
+      <div class="big ${cls(m.net)}">${fmt(m.net)}</div></div>
+    <div class="card"><div class="label">Trade win %</div>
+      <div class="flex"><div class="big">${pct(m.winRate)}</div>${ring(m.winRate, "var(--accent)")}</div>
+      <div class="sub"><span>${m.wins.length} wins</span><span>${m.losses.length} losses</span></div></div>
+    <div class="card"><div class="label">Profit factor</div>
+      <div class="flex"><div class="big">${m.pf.toFixed(2)}</div>${ring(m.pf / 3, "var(--gain)")}</div></div>
+    <div class="card"><div class="label">Day win %</div>
+      <div class="flex"><div class="big">${pct(m.dayWin)}</div>${ring(m.dayWin, "var(--accent)")}</div></div>
+    <div class="card"><div class="label">Avg win / loss per trade</div>
+      <div class="big">${m.awl.toFixed(2)}</div>
+      <div class="bar"><i style="width:${(m.avgW / (m.avgW + m.avgL || 1) * 100).toFixed(1)}%"></i></div>
+      <div class="sub"><span class="pos">${fmt(m.avgW)}</span><span class="neg">${fmt(-m.avgL)}</span></div></div>
+  </section>`;
+}
+
+function equityHTML(m) {
+  if (m.cum.length < 2) return `<div class="empty-note">Add trades to see your equity curve.</div>`;
+  const W = 600, H = 220, p = 10;
+  const min = Math.min(0, ...m.cum), max = Math.max(0, ...m.cum), span = (max - min) || 1;
+  const y = v => H - p - ((v - min) / span) * (H - 2 * p);
+  const x = i => (i / (m.cum.length - 1)) * W;
+  const line = "M" + m.cum.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("L");
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:220px" role="img" aria-label="Cumulative P&amp;L">
+    <defs><linearGradient id="eqg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="var(--accent)" stop-opacity=".35"/><stop offset="1" stop-color="var(--accent)" stop-opacity="0"/></linearGradient></defs>
+    <line class="grid-line" x1="0" x2="${W}" y1="${y(0)}" y2="${y(0)}" stroke-dasharray="4 4"/>
+    <path d="${line} L${W},${H} L0,${H} Z" fill="url(#eqg)"/>
+    <path d="${line}" fill="none" stroke="var(--accent)" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>
+    <div class="sub"><span>${fmt(0)}</span><span class="${cls(m.net)}">${fmt(m.net)}</span></div>`;
+}
+
+function barsHTML(m) {
+  if (!m.days.length) return `<div class="empty-note">No trading days yet.</div>`;
+  const W = 600, H = 220, p = 10, y0 = H / 2;
+  const max = Math.max(...m.days.map(d => Math.abs(d.pl))) || 1;
+  const sc = (H / 2 - p) / max, bw = W / m.days.length;
+  const bars = m.days.map((d, i) => {
+    const h = Math.max(1.5, Math.abs(d.pl) * sc);
+    const yy = d.pl >= 0 ? y0 - h : y0;
+    return `<rect x="${(i * bw + bw * 0.2).toFixed(1)}" y="${yy.toFixed(1)}" width="${(bw * 0.6).toFixed(1)}" height="${h.toFixed(1)}" rx="1.5" fill="${d.pl >= 0 ? "var(--gain)" : "var(--loss)"}" fill-opacity=".85"/>`;
+  }).join("");
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="height:220px" role="img" aria-label="Net daily P&amp;L">
+    <line class="grid-line" x1="0" x2="${W}" y1="${y0}" y2="${y0}"/>${bars}</svg>
+    <div class="sub"><span>${dt(m.days[0].iso)}</span><span>${dt(m.days[m.days.length - 1].iso)}</span></div>`;
+}
+
+function recentHTML() {
+  if (ui.dashTab === "open") {
+    const open = state.open.filter(inScope);
+    return `<table><thead><tr><th>Symbol</th><th class="n">Size</th><th class="n">Unrealized</th><th></th></tr></thead><tbody>
+      ${open.map(o => `<tr><td>${escapeHTML(o.sym)}</td><td class="n">${escapeHTML(o.size)}</td><td class="n ${cls(o.pl)}">${fmt(o.pl)}</td>
+        <td class="n"><button class="mini" data-action="close-open" data-id="${o.id}">Close at P&amp;L</button></td></tr>`).join("") ||
+        `<tr><td colspan="4" class="empty-note">No open positions.</td></tr>`}
+      </tbody></table>`;
+  }
+  const rows = scoped().sort(sortDesc).slice(0, 8);
+  return `<table><thead><tr><th>Date</th><th>Session</th><th>Symbol</th><th class="n">Net P&amp;L</th><th></th></tr></thead><tbody>
+    ${rows.map(t => `<tr><td>${dt(t.date)}</td><td>${escapeHTML(sessionName(t.sessionId))}</td><td>${escapeHTML(t.sym)}</td>
+      <td class="n ${cls(t.pnl)}">${fmt(t.pnl)}</td>
+      <td class="n"><button class="x" data-action="del" data-id="${t.id}" aria-label="Delete ${escapeHTML(t.sym)} trade">×</button></td></tr>`).join("") ||
+      `<tr><td colspan="5" class="empty-note">No trades in this account yet.</td></tr>`}
+    </tbody></table>`;
+}
+
+function calendarHTML() {
+  const list = scoped();
+  const dayMap = new Map(dayList(list).map(d => [d.iso, d]));
+  const first = new Date(ui.calY, ui.calM, 1);
+  const dim = new Date(ui.calY, ui.calM + 1, 0).getDate();
+  const rows = Math.ceil((first.getDay() + dim) / 7);
+  const start = new Date(ui.calY, ui.calM, 1 - first.getDay());
+  let monthPL = 0, monthDays = 0;
+  let cells = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d => `<div class="dow">${d}</div>`).join("") + `<div class="dow">Week</div>`;
+  for (let w = 0; w < rows; w++) {
+    let wk = 0, wd = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(start); d.setDate(start.getDate() + w * 7 + i);
+      const key = iso(d), inM = d.getMonth() === ui.calM, day = dayMap.get(key);
+      if (inM && day) { monthPL += day.pl; monthDays++; wk += day.pl; wd++; }
+      const tone = day ? (day.pl >= 0 ? " g" : " l") : "";
+      const act = day ? ` trade" data-action="day" data-day="${key}" role="button" tabindex="0"` : `"`;
+      const sel = ui.selectedDay === key ? " sel" : "";
+      cells += `<div class="day${tone}${inM ? "" : " out"}${sel}${act}>${d.getDate()}${inM && day ? `<span class="pl ${cls(day.pl)}">${fmt(day.pl)}</span><span class="cnt">${day.n} trades</span>` : ""}</div>`;
+    }
+    cells += `<div class="wk"><small>Week ${w + 1}</small><b class="${cls(wk)}">${fmt(wk)}</b><span>${wd} days</span></div>`;
+  }
+  const sel = ui.selectedDay ? list.filter(t => t.date === ui.selectedDay) : null;
+  const panel = sel ? `<div class="day-panel">
+      <div class="day-panel-head"><h2 style="margin:0">${dt(ui.selectedDay)}</h2>
+        <div style="display:flex;gap:8px"><button class="mini" data-action="add" data-day="${ui.selectedDay}">Add trade this day</button><button class="mini danger" data-action="del-day" data-day="${ui.selectedDay}">${ui.confirmDay === ui.selectedDay ? "Confirm delete" : "Delete all trades"}</button></div></div>
+      <table><tbody>${sel.map(t => `<tr><td>${escapeHTML(sessionName(t.sessionId))}</td><td>${escapeHTML(t.sym)}</td><td>${escapeHTML(modelName(t.modelId))}</td>
+        <td class="n ${cls(t.pnl)}">${fmt(t.pnl)}</td>
+        <td class="n"><button class="x" data-action="del" data-id="${t.id}" aria-label="Delete trade">×</button></td></tr>`).join("") || `<tr><td class="empty-note">No trades.</td></tr>`}</tbody></table>
+    </div>` : `<div class="hint" style="margin-top:12px">Click a trading day to see its trades.</div>`;
+  const mlabel = first.toLocaleString("en-US", { month: "long", year: "numeric" });
+  return `<div class="cal-head">
+      <div class="cal-nav"><button data-action="prev" aria-label="Previous month">&larr;</button>
+        <div class="cal-title">${mlabel}</div>
+        <button data-action="next" aria-label="Next month">&rarr;</button></div>
+      <div class="mstats">Monthly stats: <span class="${cls(monthPL)}">${fmt(monthPL)}</span> &middot; ${monthDays} days</div>
+    </div>
+    <div class="cal">${cells}</div>${panel}`;
+}
+
+function extrasHTML(m) {
+  const list = scoped();
+  const bySess = new Map();
+  list.forEach(t => { const k = sessionName(t.sessionId); bySess.set(k, (bySess.get(k) || 0) + t.pnl); });
+  const sessRows = [...bySess].sort((a, b) => b[1] - a[1]);
+  const mxSess = Math.max(1, ...sessRows.map(r => Math.abs(r[1])));
+  const sessHTML = sessRows.map(([name, v]) => `
+    <div class="hrow wide"><span>${escapeHTML(name)}</span>
+      <div class="htrack"><i style="width:${(Math.abs(v) / mxSess * 100).toFixed(1)}%;background:var(--${v >= 0 ? "gain" : "loss"})"></i></div>
+      <b class="n ${cls(v)}" style="font-family:'IBM Plex Mono',monospace;font-weight:500">${fmt(v)}</b></div>`).join("") || `<div class="empty-note">No trades yet.</div>`;
+
+  const agg = {};
+  list.forEach(t => agg[t.sym] = (agg[t.sym] || 0) + t.pnl);
+  const symRows = Object.entries(agg).sort((a, b) => b[1] - a[1]);
+  const mxS = Math.max(1, ...symRows.map(r => Math.abs(r[1])));
+  const symHTML = symRows.map(([s, v]) => `
+    <div class="hrow wide clickable" role="button" tabindex="0" data-action="filter" data-sym="${escapeHTML(s)}" title="Show ${escapeHTML(s)} trades">
+      <span>${escapeHTML(s)}</span>
+      <div class="htrack"><i style="width:${(Math.abs(v) / mxS * 100).toFixed(1)}%;background:var(--${v >= 0 ? "gain" : "loss"})"></i></div>
+      <b class="n ${cls(v)}" style="font-family:'IBM Plex Mono',monospace;font-weight:500">${fmt(v)}</b></div>`).join("") || `<div class="empty-note">No trades yet.</div>`;
+
+  const names = ["Mon","Tue","Wed","Thu","Fri"];
+  const wd = names.map((_, k) => m.days.filter(d => parseISO(d.iso).getDay() === k + 1).reduce((s, d) => s + d.pl, 0));
+  const mxW = Math.max(1, ...wd.map(Math.abs)), bw = 300 / 5, base = 130, sc = 100 / mxW;
+  const wdBars = wd.map((v, k) => {
+    const h = Math.abs(v) * sc, yy = v >= 0 ? base - h : base;
+    return `<rect x="${(k * bw + bw * 0.22).toFixed(1)}" y="${yy.toFixed(1)}" width="${(bw * 0.56).toFixed(1)}" height="${h.toFixed(1)}" rx="4" fill="${v >= 0 ? "var(--gain)" : "var(--loss)"}"/>
+      <text x="${(k * bw + bw / 2).toFixed(1)}" y="160" text-anchor="middle" class="axis-label">${names[k]}</text>
+      <text x="${(k * bw + bw / 2).toFixed(1)}" y="${(v >= 0 ? yy - 6 : yy + h + 14).toFixed(1)}" text-anchor="middle" class="axis-tick">${fmt(v)}</text>`;
+  }).join("");
+
+  return `<section class="r3">
+    <div class="card"><h2>Performance by session</h2>${sessHTML}</div>
+    <div class="card"><h2>Performance by symbol</h2><div class="hint" style="margin:-6px 0 4px">Click a symbol to see its trades.</div>${symHTML}</div>
+    <div class="card"><h2>Performance by weekday</h2>
+      <svg viewBox="0 0 300 170" role="img" aria-label="P&amp;L by weekday">
+        <line class="grid-line" x1="0" x2="300" y1="${base}" y2="${base}"/>${wdBars}</svg></div>
+  </section>`;
+}
+
+function accountBarHTML() {
+  return `<div class="acct-bar">
+    <label>Account
+      <select data-acct-select aria-label="Select account">
+        <option value="all" ${ui.accountId === "all" ? "selected" : ""}>All accounts</option>
+        ${state.accounts.map(a => `<option value="${a.id}" ${ui.accountId === a.id ? "selected" : ""}>${escapeHTML(a.name)}</option>`).join("")}
+      </select>
+    </label>
+    <div style="display:flex;gap:8px">
+      <button class="mini" data-action="view" data-view="accounts">Manage accounts</button>
+    </div>
+  </div>`;
+}
+
+function dashBandHTML() {
+  return `<div class="dash-band">
+    <h1 class="dash-title">Dashboard</h1>
+    <div class="dash-actions">
+      
+      <div class="acct-dd">
+        <button class="acct-btn" data-action="acct-menu" aria-haspopup="listbox" aria-expanded="${ui.acctOpen ? "true" : "false"}">${ui.accountId === "all" ? "All accounts" : escapeHTML(accountName(ui.accountId))} <span class="acct-caret">&#9662;</span></button>
+        ${ui.acctOpen ? `<div class="acct-menu" role="listbox">
+          <button class="acct-item ${ui.accountId === "all" ? "on" : ""}" role="option" aria-selected="${ui.accountId === "all"}" data-action="select-account" data-id="all">${ui.accountId === "all" ? "&#10003; " : ""}All accounts</button>
+          ${acctMenuItems()}
+        </div>` : ""}
+      </div>
+      <button class="blue" data-action="today">Start my day</button>
+    </div>
+  </div>
+  <div class="dash-strip">
+    <button class="primary mini" data-action="import">+ Import trades</button>
+    <div class="range-pick">
+      <button class="mini" data-action="range-preset" data-preset="30d">Last 30 days</button>
+      <button class="mini" data-action="range-preset" data-preset="month">This month</button>
+      <button class="mini" data-action="range-preset" data-preset="year">This year</button>
+      <label>From <input type="date" data-range="from" value="${ui.rangeFrom}"></label>
+      <label>To <input type="date" data-range="to" value="${ui.rangeTo}"></label>
+      ${ui.rangeFrom || ui.rangeTo ? "<button class=\"mini\" data-action=\"range-all\">All time</button>" : ""}
+    </div>
+    <span>${escapeHTML(state.lastImport || "No import yet. Use a CSV with date (YYYY-MM-DD), symbol, and net P&L columns.")}</span>
+  </div>`;
+}
+
+// ---------- views ----------
+function viewDashboard(m) {
+  const tabs = `<div class="tabs" role="tablist">
+    <span tabindex="0" role="tab" class="${ui.dashTab === "recent" ? "on" : ""}" data-action="tab" data-tab="recent">Recent trades</span>
+    </div>`;
+  return `${dashBandHTML()}
+    ${statsHTML(m, scoped().length)}
+    <section class="row r1">
+      <div class="card"><h2>Daily net cumulative P&amp;L</h2>${equityHTML(m)}</div>
+      <div class="card"><h2>Net daily P&amp;L</h2>${barsHTML(m)}</div>
+    </section>
+    <section class="row r2">
+      <div class="card">${tabs}${recentHTML()}</div>
+      <div class="card">${calendarHTML()}</div>
+    </section>
+    ${extrasHTML(m)}`;
+}
+
+function viewTrades() {
+  const list = scoped().filter(t => !ui.filter || t.sym === ui.filter).sort(sortDesc);
+  const fm = metrics(list);
+  return `<div class="card">
+    <div class="flex" style="margin-bottom:14px;flex-wrap:wrap">
+      <div>${ui.filter ? `<span class="chip">${escapeHTML(ui.filter)}<button data-action="clear-filter" aria-label="Clear filter">×</button></span>` : `<span class="muted">${ui.accountId === "all" ? "All accounts" : escapeHTML(accountName(ui.accountId))}</span>`}</div>
+      <div style="display:flex;gap:8px">
+        <button class="mini" data-action="export">Export CSV</button>
+        <button class="primary mini" data-action="add">Add trade</button>
+      </div>
+    </div>
+    <div class="sumline">
+      <div>Trades<b>${list.length}</b></div>
+      <div>Net P&amp;L<b class="${cls(fm.net)}">${fmt(fm.net)}</b></div>
+      <div>Win rate<b>${pct(fm.winRate)}</b></div>
+      <div>Profit factor<b>${fm.pf.toFixed(2)}</b></div>
+    </div>
+    <table><thead><tr><th>Date</th><th>Account</th><th>Session</th><th>Symbol</th><th>Entry model</th><th class="n">Net P&amp;L</th><th class="n">Files</th><th></th></tr></thead><tbody>
+      ${list.map(t => `<tr><td>${dt(t.date)}</td><td>${escapeHTML(accountName(t.accountId))}</td><td>${escapeHTML(sessionName(t.sessionId))}</td><td>${escapeHTML(t.sym)}</td>
+        <td>${escapeHTML(modelName(t.modelId))}</td>
+        <td class="n ${cls(t.pnl)}">${fmt(t.pnl)}</td>
+        <td class="n">${t.files.length || "—"}</td>
+        <td class="n"><button class="x" data-action="del" data-id="${t.id}" aria-label="Delete trade">×</button></td></tr>`).join("") ||
+        `<tr><td colspan="8" class="empty-note">No trades${ui.filter ? " for " + escapeHTML(ui.filter) : ""} yet.</td></tr>`}
+    </tbody></table></div>`;
+}
+
+function viewJournal() {
+  const days = [...metrics(scoped()).days].reverse();
+  return `<div class="card">${days.map(d => `
+    <div class="jday">
+      <div><div class="d">${dt(d.iso)}</div><div class="pl ${cls(d.pl)}">${fmt(d.pl)}</div><div class="hint">${d.n} trades</div></div>
+      <div><label class="hint" for="n-${d.iso}">Notes for the day</label>
+        <textarea id="n-${d.iso}" data-note="${d.iso}" placeholder="What went well, what to change tomorrow?">${escapeHTML(state.notes[d.iso] || "")}</textarea></div>
+    </div>`).join("") || `<div class="empty-note">Trade days will show up here.</div>`}</div>`;
+}
+
+function viewData() {
+  return `<div><button class="primary" data-action="new-model">Add entry model</button> <button data-action="reset-sample">Reload sample trades</button></div>
+    <div class="model-grid">${state.models.map(mo => {
+      const ts = state.trades.filter(t => t.modelId === mo.id);
+      const p = sum(ts);
+      return `<button class="model-card" data-action="open-model" data-id="${mo.id}">
+        <b>${escapeHTML(mo.name || "Untitled")}</b>
+        <span>${ts.length} trades · <span class="${cls(p)}">${fmt(p)}</span></span>
+        <span>${escapeHTML((mo.description || "").slice(0, 100)) || "No description yet"}</span></button>`;
+    }).join("")}</div>`;
+}
+
+function viewModel() {
+  const mo = state.models.find(x => x.id === ui.modelId);
+  if (!mo) { ui.view = "data"; return viewData(); }
+  const ts = state.trades.filter(t => t.modelId === mo.id).sort(sortDesc);
+  const mm = metrics(ts);
+  return `<div class="card">
+    <div class="flex" style="margin-bottom:14px"><button class="mini" data-action="back-data">&larr; Back</button>
+      <button class="mini" data-action="del-model">Delete model</button></div>
+    <label class="field">Name<input value="${escapeHTML(mo.name)}" data-model="${mo.id}" data-field="name"></label>
+    <label class="field">Description<textarea data-model="${mo.id}" data-field="description" placeholder="When does this setup appear, and what confirms the entry?">${escapeHTML(mo.description || "")}</textarea></label>
+  </div>
+  <div class="card" style="margin-top:12px">
+    <div class="flex" style="margin-bottom:14px;flex-wrap:wrap">
+      <div class="sumline" style="margin:0">
+        <div>Trades<b>${ts.length}</b></div>
+        <div>Net P&amp;L<b class="${cls(mm.net)}">${fmt(mm.net)}</b></div>
+        <div>Win rate<b>${pct(mm.winRate)}</b></div>
+        <div>Profit factor<b>${mm.pf.toFixed(2)}</b></div>
+      </div>
+      <button class="primary mini" data-action="add" data-model="${mo.id}">Add trade with this model</button>
+    </div>
+    ${ts.length ? `<table><thead><tr><th>Date</th><th>Session</th><th>Symbol</th><th>Result</th><th class="n">Files</th><th>Reflection</th></tr></thead><tbody>
+      ${ts.map(t => `<tr><td>${dt(t.date)}</td><td>${escapeHTML(sessionName(t.sessionId))}</td><td>${escapeHTML(t.sym)}</td>
+        <td class="${t.pnl > 0 ? "pos" : t.pnl < 0 ? "neg" : ""}">${t.pnl > 0 ? "Win" : t.pnl < 0 ? "Loss" : "Breakeven"}</td><td class="n">${t.files.length || "—"}</td>
+        <td class="hint">${escapeHTML((t.reflection || "").slice(0, 90)) || "—"}</td></tr>`).join("")}
+      </tbody></table>` : `<div class="empty-note">No trades use this model yet.</div>`}
+  </div>`;
+}
+
+function viewSettings() {
+  const email = (typeof cloudUser !== "undefined" && cloudUser && cloudUser.email) ? cloudUser.email : "Local copy (no account)";
+  return `<div class="card" style="max-width:720px">
+    <h2>Account</h2>
+    <p class="hint" style="margin:0 0 14px">${escapeHTML(email)}</p>
+    <div class="settings-row"><button class="mini" data-action="export">Export CSV</button><span class="hint">Download all trades as a spreadsheet file.</span></div>
+    <div class="settings-row"><button class="mini" data-action="reset-sample">Reload sample trades</button><span class="hint">Replaces trades with the sample set.</span></div>
+    <div class="settings-row"><button class="mini danger" data-action="logout">Log out</button><span class="hint">Return to the login screen.</span></div>
+    <div class="settings-row"><a class="mini" href="#home" style="text-decoration:none;display:inline-block;padding:4px 10px;border:1px solid var(--line);border-radius:8px;color:var(--text)">Back to home</a></div>
+  </div>`;
+}
+function viewPlaceholder(name) {
+  return `<div class="card"><h2>${NAMES[name] || "Coming soon"}</h2>
+    <div class="empty-note">This section isn't set up yet. Trades, the daily journal, data collection, and the dashboard are working.</div>
+    <div class="actions" style="justify-content:center"><button data-action="view" data-view="dashboard">Back to dashboard</button></div></div>`;
+}
+
+// ---------- mindset quotes and trade psychology ----------
+const QUOTES = [
+  "A good trade is one you would take again, win or lose.",
+  "Your edge is your process. The result is only feedback.",
+  "A loss is a cost of doing business, not a verdict on you.",
+  "Patience is a position too. Hold it.",
+  "The market will open tomorrow. Protect your ability to trade it.",
+  "Emotion is information. It should never place your orders.",
+  "You don't need to be in every move to make money.",
+  "Position size is the one thing you fully control. Respect it.",
+  "Step away while you can still think clearly.",
+  "Discipline is choosing the plan over the urge, again and again.",
+  "Keep score on your decisions, not on your P&L.",
+  "One calm trade beats three rushed ones.",
+  "Small losses taken cleanly keep you in the game.",
+  "You can be right about the market and still lose money. Manage the risk.",
+  "The best traders are often the most bored ones.",
+  "Name the feeling, then decide what the plan says.",
+  "A stop you honor is a success, even when the trade isn't.",
+  "Consistency compounds faster than heroics.",
+  "Revenge trades are payments to your impatience.",
+  "Protect your capital first, then your ego.",
+  "Don't trade to recover. Trade to execute.",
+  "Missing a move costs nothing. Breaking your rules costs everything.",
+  "Your journal shows who you are when the money is on the line.",
+  "Be the trader who follows the plan on the boring days.",
+  "You are not your last trade.",
+  "Measure the process. Over time, the money follows the process.",
+  "Quiet mind, clear chart.",
+  "Good days can make you reckless. Bad days can make you small. Stay even.",
+  "Before you click, ask: is this in my plan?",
+  "Give yourself permission to do nothing.",
+  "The market rewards patience and punishes impatience.",
+  "Set your rules when you're calm. Follow them when you're not.",
+  "Slow is smooth, and smooth is fast.",
+  "A loss you learn from is cheaper than a win you didn't earn.",
+  "Respect risk, and the market has less power over you.",
+  "Your next trade is a fresh start, not a rescue mission.",
+  "Showing up prepared is half the edge."
+];
+const TIP_POOLS = {
+  "Another": [
+    "Wanting another trade right now is a signal to pause, not to act.",
+    "Ask whether this setup is in your plan. If not, it is not a trade.",
+    "The urge to keep going usually means the last trade already left you emotional.",
+    "Close the chart for ten minutes and walk away from the screen.",
+    "Another trade is not a second chance. It is just another decision.",
+    "Your edge shows up in the setups you wait for, not the ones you chase.",
+    "Count your trades for the session. If you are above plan, stop.",
+    "Notice where the feeling in your chest comes from before you click.",
+    "Wanting more is the market’s oldest trap. Let it pass.",
+    "Write the setup in one sentence. If you cannot, do not take it.",
+    "A good session has a clear end. Decide the end before the next trade.",
+    "The best traders are often the ones who stop first.",
+    "Breathe out slowly and ask: would I take this on a calm day?",
+    "Your plan already said how many trades you need. Trust it.",
+    "More trades do not create more profit. They create more risk.",
+    "Pause, reset your posture, and look at the higher timeframe again.",
+    "If you need the trade to feel better, it is not the right trade.",
+    "Set a maximum trade count for the day and honour it.",
+    "Impulse is loud. Your plan is quiet, so listen for it.",
+    "Check your stop and size before anything else.",
+    "You are allowed to have no trade today.",
+    "Another trade will not fix the last one. Only discipline does.",
+    "Step away from the platform and return with a fresh read.",
+    "Ask what you would tell a friend who wanted to click right now.",
+    "If your hand moves before your mind does, close the order pad.",
+    "The next good setup will still be there after a short break.",
+    "Patience is a position too. Hold it.",
+    "Trading by boredom is trading by accident.",
+    "Name the emotion you feel right now. Naming it loosens its grip.",
+    "Your next click should come from the plan, not the pressure.",
+    "An empty session is a complete session if you followed your rules.",
+    "Look at your last five trades. Were they all planned?",
+    "Let the screen be a tool, not a temptation.",
+    "Trade the setup you have, not the setup you want.",
+    "You can walk away from the market and it will still be there.",
+    "Ask whether you are trading to learn or trading to recover.",
+    "Hunger for action is normal. Obeying it is optional.",
+    "Write one thing you did well today before you place another order.",
+    "Reduce size before you reduce standards.",
+    "The market does not owe you another chance today.",
+    "Slow your breath for three counts in and three out.",
+    "If you feel rushed, you are probably not ready.",
+    "The discipline is in the no, not the yes.",
+    "Give the trade a rest. You can return when your head is clear.",
+    "Read your plan’s rules out loud before you decide.",
+    "Do not let one more trade undo a good morning.",
+    "Your task right now is to do nothing and feel it fully.",
+    "Every extra trade you skip protects your account.",
+    "Return to your checklist, then decide.",
+    "Calm is a skill. Practise it on the trades you pass."
+  ],
+  "After a loss": [
+    "A loss is data, not a verdict on who you are.",
+    "Write down what happened: setup, entry, exit, and what you felt.",
+    "Step away for ten minutes before you touch the next order.",
+    "One losing trade does not mean your strategy is broken.",
+    "Losses are the tuition you pay to learn the market.",
+    "Check whether you followed your plan. If you did, the loss was a cost of doing business.",
+    "Breathe, stand up, and reset your posture.",
+    "Do not try to win the money back today. It will return through the plan.",
+    "The loss has already happened. You still control what happens next.",
+    "Ask: did I take this trade for the right reason?",
+    "You can be disappointed without being reckless.",
+    "Good traders lose often and still stay in the game.",
+    "Review the chart with curiosity, not regret.",
+    "A loss is information. Use it or the money is wasted.",
+    "Protect your capital first, then your ego.",
+    "Say it out loud: this was one trade, and I am still disciplined.",
+    "Do not let the last trade decide your next size.",
+    "Losing your bankroll is worse than losing one trade. Protect the bankroll.",
+    "Journal the loss tonight so you do not carry it into tomorrow.",
+    "Ask what you would do differently, then write one specific change.",
+    "If you are angry, your decisions are compromised. Step away.",
+    "The market does not know you lost. Do not let it run your day.",
+    "Losses teach patience when you refuse to rush the comeback.",
+    "You are not behind. You are one trade into a longer game.",
+    "Accept the loss fully, then decide if you are ready to continue.",
+    "Replace self-criticism with a question: what did this teach me?",
+    "A small loss handled well is worth more than a lucky win.",
+    "Look at your win rate across the month, not one trade.",
+    "The loss is over. Your reaction to it is still yours to choose.",
+    "Stop the session if you cannot focus. Come back tomorrow.",
+    "Do not add to a losing position to prove a point.",
+    "Notice the story you are telling yourself and question whether it is true.",
+    "Your plan survives a loss. It is built for it.",
+    "A bad outcome from a good process is still a good trade.",
+    "Look for the one lesson worth keeping from this trade.",
+    "Forgive yourself quickly and learn thoroughly.",
+    "Losses are normal. Panic is optional.",
+    "Close the journal with one thing you did right.",
+    "Do not measure your worth by today’s P&L.",
+    "The most expensive loss is the one that changes your rules.",
+    "Shake it off physically: stretch, drink water, look away from the screen.",
+    "Keep your size the same until your head is clear.",
+    "You can be upset and still follow the plan.",
+    "Losses are part of the business. Respect them without fear.",
+    "Reflect on the setup, not the money.",
+    "Your next trade is a new trade with a fresh plan.",
+    "Resist the urge to explain the loss away. Just record it.",
+    "A disciplined trader can lose and still be proud of the day.",
+    "Ask: would I make the same decision with a clear mind?",
+    "Give yourself permission to lose today and win tomorrow."
+  ],
+  "Feeling FOMO": [
+    "If you are chasing, the move already happened without you.",
+    "FOMO is a feeling, not a signal. Check your entry model.",
+    "There will be another setup. There always is.",
+    "Missing a move costs you nothing. Chasing it can cost your whole plan.",
+    "Wait for price to come to your level, not the other way around.",
+    "Your plan defines the entry. Your emotions do not.",
+    "Ask: would I enter this if I had not seen the move already?",
+    "The best entries are boring. Let this one be boring too.",
+    "Chasing a candle is how good traders get hurt.",
+    "Name the fear of missing out and let it pass.",
+    "You do not need to be in every move to be a good trader.",
+    "The market will offer another opportunity in a few minutes.",
+    "Watch, do not act. Observation is a position too.",
+    "If it is not on your checklist, it is not your trade.",
+    "Let go of this move and focus on the next valid setup.",
+    "Chasing often means entering at the worst price.",
+    "The fear of missing out is loud. Your plan is calmer.",
+    "Let the chart come to you.",
+    "Hold off until your stop and target make sense.",
+    "If you would not have taken it yesterday, do not take it today.",
+    "A missed trade is not a loss. It is a skipped risk.",
+    "Breathe and wait for confirmation before you move.",
+    "Your job is to execute the plan, not to catch every move.",
+    "The move you missed is already yesterday’s story.",
+    "Only trade the setup you planned for before the open.",
+    "Patience feels like losing when you are emotional. Trust the process.",
+    "Chasing trades means trading your emotions, not the chart.",
+    "Step back and reread your entry rules out loud.",
+    "A good trade is one you would take even if nobody saw it.",
+    "You are not behind. The market has no finish line.",
+    "A price you wanted is still valid if the setup returns.",
+    "Ask what you are afraid of right now, then take a breath.",
+    "Do not let the crowd’s excitement set your entry.",
+    "Consistency beats one lucky chase.",
+    "Mark your level and wait for the market to meet it.",
+    "If your heart is racing, your entry is probably rushed.",
+    "Being left out of a move is a feeling, not a fact.",
+    "Your edge is in the process you repeat, not the moves you catch.",
+    "Let the fear pass before you decide.",
+    "The best trade might be the one you only watched.",
+    "Protect your plan from your excitement.",
+    "Missing one move keeps your account intact for the next one.",
+    "Close the order pad and go for a short walk.",
+    "Remember the last chase you regretted and what it cost you.",
+    "You are allowed to pass on a move that does not fit your rules.",
+    "Stop trading to satisfy the urge to be involved.",
+    "The next valid setup is a better use of your focus.",
+    "Trade what is in front of you, not what already left.",
+    "Stay present with the chart you have now.",
+    "Discipline means not chasing, even when it hurts."
+  ],
+  "Revenge urge": [
+    "Trading to win back money is how small losses grow into big ones.",
+    "You are not trading the market right now. You are trading your pain.",
+    "Stop for the session. The market will be here tomorrow.",
+    "Revenge trades rarely follow your plan, so they rarely make money.",
+    "Remember how the last revenge trade felt and where it ended.",
+    "The goal is not to get even. The goal is to follow the plan.",
+    "Your account does not owe you anything.",
+    "Step away from the screen before you place another order.",
+    "Anger makes your decisions worse. Let it cool first.",
+    "Close the platform and write down what you are feeling.",
+    "Recovering a loss is a long process, not a single trade.",
+    "The urge to get it back is the trap itself.",
+    "Protect what is left, and trade smaller if you must trade at all.",
+    "Ask whether you would take this trade if you had not lost today.",
+    "Breathe slowly until your heart rate drops.",
+    "Revenge is a reaction, and reactions are not a strategy.",
+    "Your next trade should come from your plan, not your frustration.",
+    "Losing hurts. Revenge trading hurts more.",
+    "Stop, reset, and come back tomorrow with a clean slate.",
+    "You do not need to earn back today what you lost today.",
+    "The chart can wait. Your emotions need the attention.",
+    "Walk away from the desk and stretch your body.",
+    "Ask: am I trading to make money, or to feel better?",
+    "Revenge is the fastest way to turn one loss into three.",
+    "Your plan has rules for a reason. Follow them especially now.",
+    "A calm trader with a small loss beats an angry trader with a large one.",
+    "Do not increase size to recover. Keep it the same or smaller.",
+    "Your job today is to protect your mind as well as your capital.",
+    "Write the rule you are about to break, then decide if you still want to break it.",
+    "Shift your focus from the money to the process.",
+    "Let the urge pass like a wave. It always does.",
+    "Revenge trading turns discipline into a gamble.",
+    "Reflect on your last revenge trade before you place another.",
+    "The market does not care about your loss. Care for yourself instead.",
+    "Take a real break: water, fresh air, and a walk.",
+    "Every revenge trade costs more than the money.",
+    "Accept the loss and return to your normal size.",
+    "Do not make tomorrow pay for today’s anger.",
+    "Your edge is patience. Revenge destroys it.",
+    "The best comeback is a calm, planned session.",
+    "Stop the session if you catch yourself checking P&L every minute.",
+    "Remind yourself that losses are part of the game.",
+    "Trade only when you are calm enough to explain your reason.",
+    "Emotions are information. Do not let them place your orders.",
+    "Revenge makes losses bigger. Discipline makes them smaller.",
+    "Close your eyes, breathe, and return to the present moment.",
+    "Your next right decision is to stop.",
+    "You can end the day with less money and more self-respect.",
+    "Write what you would tell your best friend in this moment.",
+    "Recover your mind first, and the account will follow."
+  ]
+};
+const tipPool = () => TIP_POOLS[ui.tip] || [];
+const MINDSET_TAGS = ["Another", "After a loss", "Feeling FOMO", "Revenge urge", "Calm", "Patient", "Confident"];
+
+function mindsetHTML() {
+  const i = ui.quoteIdx % QUOTES.length;
+  const pool = tipPool();
+  const tipText = ui.tip && pool.length ? pool[ui.tipIdx % pool.length] : "";
+  return `<div class="psych">
+    <div class="psych-head"><span class="psych-title">Trading psychology</span><span class="psych-count">${i + 1} / ${QUOTES.length}</span></div>
+    <div class="mind-card">
+      <div class="mind-mark" aria-hidden="true">&ldquo;</div>
+      <p class="mind-quote">${escapeHTML(QUOTES[i])}</p>
+      <div class="mind-foot">
+        <span class="mind-by"><span class="mind-line"></span>VZ</span>
+        <button class="mind-next" data-action="next-quote">Next &rarr;</button>
+      </div>
+    </div>
+    ${ui.tip ? `<div class="mind-tip" key="${escapeHTML(ui.tip)}-${ui.tipIdx}"><div class="mind-tip-label">${escapeHTML(ui.tip)}</div><div class="mind-tip-text">${escapeHTML(tipText)}</div><button class="mind-tip-more" data-action="next-tip">Another reminder &rarr;</button></div>` : ""}
+    <div class="mind-prompt">What's on your mind right now?</div>
+    <div class="mind-chips">${Object.keys(TIP_POOLS).map(k => `<button class="mind-chip ${ui.tip === k ? "on" : ""}" data-action="tip" data-tip="${escapeHTML(k)}" aria-pressed="${ui.tip === k}">${escapeHTML(k)}</button>`).join("")}</div>
+  </div>`;
+}
+
+function renderDlgPsych() {
+  $("#dlgRate").innerHTML = [1, 2, 3, 4, 5].map(v =>
+    `<button type="button" class="rate ${ui.dlgPsych.rating === v ? "on" : ""}" data-action="dlg-rate" data-v="${v}" aria-pressed="${ui.dlgPsych.rating === v}">${v}</button>`).join("");
+  $("#dlgTags").innerHTML = MINDSET_TAGS.map(t =>
+    `<button type="button" class="emo ${ui.dlgPsych.tags.includes(t) ? "on" : ""}" data-action="dlg-tag" data-tag="${escapeHTML(t)}" aria-pressed="${ui.dlgPsych.tags.includes(t)}">${escapeHTML(t)}</button>`).join("");
+}
+
+// ---------- trading psychology (daily check-in, retired from the panel) ----------
+const MOODS = [[1, "Rough"], [2, "Shaky"], [3, "Neutral"], [4, "Focused"], [5, "Sharp"]];
+const EMOTIONS = ["Calm", "Confident", "Anxious", "FOMO", "Revenge", "Impatient", "Tired", "Greedy"];
+const moodLabel = v => (MOODS.find(m => m[0] === v) || [])[1] || "";
+function psychToday() {
+  const key = iso(TODAY);
+  let p = state.psych.find(x => x.date === key);
+  if (!p) { p = { id: uid(), date: key, mood: 0, emotions: [], note: "" }; state.psych.push(p); }
+  return p;
+}
+function psychHTML() {
+  const e = state.psych.find(p => p.date === iso(TODAY)) || { mood: 0, emotions: [], note: "" };
+  const hist = [...state.psych].filter(p => p.date !== iso(TODAY)).sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 4);
+  return `<div class="psych">
+    <div class="psych-title">Trading psychology</div>
+    <div class="hint">Check in before you trade, ${dt(iso(TODAY))}</div>
+    <div class="mood-row" role="group" aria-label="Mood">${MOODS.map(([v, l]) =>
+      `<button class="mood ${e.mood === v ? "on" : ""}" data-action="psych-mood" data-v="${v}" title="${l}" aria-pressed="${e.mood === v}">${v}</button>`).join("")}</div>
+    <div class="hint" style="margin-bottom:10px">${moodLabel(e.mood) || "Rate how focused you feel, 1 to 5"}</div>
+    <div class="emo-row">${EMOTIONS.map(x =>
+      `<button class="emo ${e.emotions.includes(x) ? "on" : ""}" data-action="psych-emotion" data-e="${x}" aria-pressed="${e.emotions.includes(x)}">${x}</button>`).join("")}</div>
+    <textarea class="psych-note" data-psych-note placeholder="What's on your mind? What did you notice?">${escapeHTML(e.note)}</textarea>
+    ${hist.length ? `<div style="margin-top:12px"><div class="hint" style="margin-bottom:4px">Recent check-ins</div>
+      ${hist.map(p => `<div class="ph-row"><span>${dt(p.date)}</span><span>${moodLabel(p.mood) || "—"}${p.emotions.length ? " · " + escapeHTML(p.emotions.join(", ")) : ""}</span></div>`).join("")}</div>` : ""}
+  </div>`;
+}
+
+// ---------- trade replay (Lightweight Charts) ----------
+const RP_SPEEDS = [0.5, 1, 2, 4];
+function rpCurrentTrade() {
+  return state.trades.find(t => t.id === ui.rp.tradeId) || [...state.trades].sort(sortDesc)[0] || null;
+}
+function tsOf(s) {
+  if (!s) return null;
+  const v = Date.parse(s + "Z") / 1000;
+  return Number.isNaN(v) ? null : v;
+}
+function hashStr(s) {
+  let h = 2166136261;
+  for (const ch of s) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return h >>> 0;
+}
+function sampleBars(trade) {
+  // Demo candles for a 5-minute session, used when no real candles exist for that day
+  const R = mulberry(hashStr(trade.id));
+  const base = Date.parse(trade.date + "T13:30:00Z") / 1000;
+  let p = 100 + R() * 400;
+  const bars = [];
+  for (let i = 0; i < 78; i++) {
+    const o = p, c = o + (R() - 0.48) * o * 0.004;
+    const h = Math.max(o, c) + R() * o * 0.002, l = Math.min(o, c) - R() * o * 0.002;
+    bars.push({ time: base + i * 300, open: +o.toFixed(2), high: +h.toFixed(2), low: +l.toFixed(2), close: +c.toFixed(2) });
+    p = c;
+  }
+  return bars;
+}
+const utcDay = ts => new Date(ts * 1000).toISOString().slice(0, 10);
+function realBarsFor(trade) {
+  return trade ? (state.candles[trade.sym] || []).filter(b => utcDay(b.time) === trade.date) : [];
+}
+function rpBars() {
+  const t = rpCurrentTrade();
+  if (!t) return [];
+  const real = realBarsFor(t);
+  return real.length ? real : sampleBars(t);
+}
+function viewReplay() {
+  const trades = [...state.trades].sort(sortDesc);
+  const t = rpCurrentTrade();
+  const bars = rpBars();
+  const isSample = !!t && !realBarsFor(t).length;
+  const rp = ui.rp, rep = (t && t.replay) || {};
+  return `<div class="rp-grid">
+    <div class="card">
+      <div class="rp-bar">
+        <label>Trade
+          <select data-rp-trade>${trades.map(x => `<option value="${x.id}" ${t && x.id === t.id ? "selected" : ""}>${dt(x.date)} · ${escapeHTML(x.sym)} · ${fmt(x.pnl)}</option>`).join("") || `<option>No trades yet</option>`}</select></label>
+        <label>Entry (UTC)<input type="datetime-local" data-rp-time="entry" value="${rep.entry || ""}"></label>
+        <label>Exit (UTC)<input type="datetime-local" data-rp-time="exit" value="${rep.exit || ""}"></label>
+        <label>Candles CSV<input id="rpCsv" type="file" accept=".csv,text/csv"></label>
+      </div>
+    </div>
+    <div class="card">
+      <div id="rpChart" class="rp-chart"></div>
+      <div class="rp-controls">
+        <button class="mini" data-action="rp-reset" aria-label="Back to start">|&lt;</button>
+        <button class="mini" data-action="rp-step" data-step="-1" aria-label="Step back">&lt;</button>
+        <button class="primary mini" data-action="rp-toggle">${rp.playing ? "Pause" : "Play"}</button>
+        <button class="mini" data-action="rp-step" data-step="1" aria-label="Step forward">&gt;</button>
+        <select data-rp-speed aria-label="Speed" style="width:auto">${RP_SPEEDS.map(s => `<option value="${s}" ${rp.speed === s ? "selected" : ""}>${s}x</option>`).join("")}</select>
+        <input type="range" data-rp-seek min="0" max="${Math.max(0, bars.length - 1)}" value="${Math.min(rp.idx, Math.max(0, bars.length - 1))}" aria-label="Replay position">
+      </div>
+      <div class="hint" id="rpInfo" style="margin-top:8px"></div>
+      <div class="hint" style="margin-top:6px">${isSample ? "Demo candles are shown because this day has no uploaded data. Upload a CSV with columns symbol,time,open,high,low,close (time as YYYY-MM-DD HH:MM, UTC) to replay real prices." : "Replaying your uploaded candles for this day."} Set entry and exit times above to mark them on the chart.</div>
+      ${rp.msg ? `<div class="hint" style="margin-top:6px">${escapeHTML(rp.msg)}</div>` : ""}
+    </div>
+  </div>`;
+}
+function setupReplay() {
+  const el = $("#rpChart");
+  if (!el) return;
+  if (ui.rp.chart) ui.rp.chart.remove();
+  ui.rp.chart = null;
+  ui.rp.series = null;
+  if (!window.LightweightCharts) {
+    el.innerHTML = `<div class="empty-note">The chart library could not load. Check your connection and reload.</div>`;
+    return;
+  }
+  const chart = LightweightCharts.createChart(el, {
+    width: el.clientWidth, height: 360,
+    layout: { background: { type: "solid", color: "#ffffff" }, textColor: "#1d2233" },
+    grid: { vertLines: { color: "#eef0f5" }, horzLines: { color: "#eef0f5" } },
+    timeScale: { timeVisible: true, secondsVisible: false }
+  });
+  ui.rp.chart = chart;
+  ui.rp.series = chart.addCandlestickSeries({
+    upColor: "#0a9b6f", downColor: "#e23a4f", borderVisible: false,
+    wickUpColor: "#0a9b6f", wickDownColor: "#e23a4f"
+  });
+  updateReplayChart(true);
+}
+function destroyReplay() {
+  rpStop();
+  if (ui.rp.chart) ui.rp.chart.remove();
+  ui.rp.chart = null;
+  ui.rp.series = null;
+}
+function updateReplayChart(fit) {
+  const rp = ui.rp;
+  if (!rp.series) return;
+  const t = rpCurrentTrade();
+  const bars = rpBars();
+  if (!bars.length) { rp.series.setData([]); return; }
+  rp.idx = Math.min(rp.idx, bars.length - 1);
+  const shown = bars.slice(0, rp.idx + 1);
+  const last = shown[shown.length - 1].time;
+  rp.series.setData(shown);
+  const snap = ts => { let best = null; for (const b of bars) if (b.time <= ts) best = b.time; return best; };
+  const markers = [];
+  const en = tsOf(t && t.replay && t.replay.entry), ex = tsOf(t && t.replay && t.replay.exit);
+  if (en != null) { const s = snap(en); if (s != null && s <= last) markers.push({ time: s, position: "belowBar", color: "#4f6ef7", shape: "arrowUp", text: "Entry" }); }
+  if (ex != null) { const s = snap(ex); if (s != null && s <= last) markers.push({ time: s, position: "aboveBar", color: t.pnl >= 0 ? "#0a9b6f" : "#e23a4f", shape: "arrowDown", text: "Exit" }); }
+  rp.series.setMarkers(markers);
+  if (fit) rp.chart.timeScale().fitContent();
+  const info = $("#rpInfo");
+  if (info) info.textContent = `Candle ${rp.idx + 1} of ${bars.length} · ${new Date(last * 1000).toISOString().slice(11, 16)} UTC · close ${shown[shown.length - 1].close}`;
+  const seek = document.querySelector("[data-rp-seek]");
+  if (seek) { seek.max = bars.length - 1; seek.value = rp.idx; }
+}
+function rpStop() {
+  clearInterval(ui.rp.timer);
+  ui.rp.timer = null;
+  ui.rp.playing = false;
+}
+function rpStart() {
+  rpStop();
+  ui.rp.playing = true;
+  ui.rp.timer = setInterval(() => {
+    if (ui.rp.idx >= rpBars().length - 1) { rpStop(); render(); return; }
+    ui.rp.idx++;
+    updateReplayChart(false);
+  }, 1000 / ui.rp.speed);
+}
+async function loadCandles(file) {
+  if (!file) return;
+  const text = await file.text();
+  let added = 0;
+  text.split(/\r?\n/).forEach(line => {
+    if (!line.trim() || /^\s*symbol/i.test(line)) return;
+    const [sym, time, o, h, l, c] = line.split(",").map(x => x.trim());
+    const ts = Date.parse(time.replace(" ", "T") + "Z") / 1000;
+    const nums = [o, h, l, c].map(Number);
+    if (!sym || Number.isNaN(ts) || nums.some(Number.isNaN)) return;
+    const key = sym.toUpperCase();
+    (state.candles[key] = state.candles[key] || []).push({ time: ts, open: nums[0], high: nums[1], low: nums[2], close: nums[3] });
+    added++;
+  });
+  Object.keys(state.candles).forEach(k => {
+    const seen = new Map();
+    state.candles[k].forEach(b => seen.set(b.time, b));
+    state.candles[k] = [...seen.values()].sort((a, b) => a.time - b.time);
+  });
+  ui.rp.msg = `Loaded ${added} candles from ${file.name}.`;
+  ui.rp.idx = 0;
+  save();
+  render();
+}
+
+// ---------- charts (timeframes, ranges, Lightweight Charts) ----------
+const TF_SEC = { "1m": 60, "5m": 300, "15m": 900, "1h": 3600, "4h": 14400, "1D": 86400, "1W": 604800 };
+const RANGE_DAYS = { "1D": 1, "1W": 7, "1M": 30, "3M": 90, "All": null };
+function chartSyms() {
+  const s = new Set(Object.keys(state.candles));
+  state.trades.forEach(t => s.add(t.sym));
+  return s.size ? [...s].sort() : ["DEMO"];
+}
+function chSym() {
+  const list = chartSyms();
+  return list.includes(ui.ch.sym) ? ui.ch.sym : list[0];
+}
+function demoSeries(sym) {
+  const R = mulberry(hashStr(sym));
+  let p = 50 + R() * 400, count = 0;
+  const bars = [];
+  for (let back = 0; count < 120; back++) {
+    const day = new Date(TODAY);
+    day.setDate(TODAY.getDate() - back);
+    if (!(day.getDay() % 6)) continue;
+    count++;
+    const base = Date.parse(iso(day) + "T13:30:00Z") / 1000;
+    for (let i = 0; i < 78; i++) {
+      const o = p, c = o + (R() - 0.48) * o * 0.003;
+      const h = Math.max(o, c) + R() * o * 0.0015, l = Math.min(o, c) - R() * o * 0.0015;
+      bars.push({ time: base + i * 300, open: +o.toFixed(2), high: +h.toFixed(2), low: +l.toFixed(2), close: +c.toFixed(2) });
+      p = c;
+    }
+  }
+  return bars.sort((a, b) => a.time - b.time);
+}
+function chBars(sym) {
+  const real = state.candles[sym];
+  return real && real.length ? real : demoSeries(sym);
+}
+function aggregate(bars, sec) {
+  const m = new Map();
+  for (const b of bars) {
+    const k = Math.floor(b.time / sec) * sec;
+    const cur = m.get(k);
+    if (!cur) m.set(k, { time: k, open: b.open, high: b.high, low: b.low, close: b.close });
+    else { cur.high = Math.max(cur.high, b.high); cur.low = Math.min(cur.low, b.low); cur.close = b.close; }
+  }
+  return [...m.values()].sort((a, b) => a.time - b.time);
+}
+function viewCharts() {
+  const syms = chartSyms(), sym = chSym();
+  const isDemo = !(state.candles[sym] && state.candles[sym].length);
+  const seg = (items, action, cur) => items.map(([v, l]) =>
+    `<button class="seg-btn ${cur === v ? "on" : ""}" data-action="${action}" data-v="${v}" aria-pressed="${cur === v}">${l}</button>`).join("");
+  return `<div class="card">
+    <div class="ch-bar">
+      <label>Symbol<select data-ch-sym>${syms.map(s => `<option value="${escapeHTML(s)}" ${s === sym ? "selected" : ""}>${escapeHTML(s)}</option>`).join("")}</select></label>
+      <div class="seg">${seg(Object.keys(TF_SEC).map(k => [k, k]), "ch-tf", ui.ch.tf)}</div>
+      <div class="seg">${seg(Object.keys(RANGE_DAYS).map(k => [k, k]), "ch-range", ui.ch.range)}</div>
+      <div class="seg">${seg([["candle", "Candles"], ["line", "Line"]], "ch-type", ui.ch.type)}</div>
+      <label>Candles CSV<input id="rpCsv" type="file" accept=".csv,text/csv"></label>
+    </div>
+    <div class="ch-head"><div><span class="ch-price" id="chPrice">—</span> <span id="chChg" class="hint"></span></div><div class="hint" id="chLegend"></div></div>
+    <div id="chChart" class="ch-chart"></div>
+    <div class="hint" style="margin-top:8px">${isDemo ? `Demo data for ${escapeHTML(sym)}: 120 sessions of 5-minute candles. Upload a CSV to chart real prices.` : `Charting your uploaded candles for ${escapeHTML(sym)}.`} Timeframes finer than the data show the data's own resolution. Live market data needs a broker or market-data connection, which this page can't make.</div>
+    ${ui.rp.msg ? `<div class="hint" style="margin-top:6px">${escapeHTML(ui.rp.msg)}</div>` : ""}
+  </div>`;
+}
+function setupCharts() {
+  const el = $("#chChart");
+  if (!el) return;
+  destroyCharts();
+  if (!window.LightweightCharts) {
+    el.innerHTML = `<div class="empty-note">The chart library could not load. Check your connection and reload.</div>`;
+    return;
+  }
+  const sym = chSym(), agg = aggregate(chBars(sym), TF_SEC[ui.ch.tf]);
+  if (!agg.length) return;
+  const chart = LightweightCharts.createChart(el, {
+    width: el.clientWidth, height: 480,
+    layout: { background: { type: "solid", color: "#ffffff" }, textColor: "#1d2233" },
+    grid: { vertLines: { color: "#eef0f5" }, horzLines: { color: "#eef0f5" } },
+    timeScale: { timeVisible: true, rightOffset: 4 }
+  });
+  ui.ch.chart = chart;
+  let series;
+  if (ui.ch.type === "line") {
+    series = chart.addLineSeries({ color: "#5b5bd6", lineWidth: 2 });
+    series.setData(agg.map(b => ({ time: b.time, value: b.close })));
+  } else {
+    series = chart.addCandlestickSeries({
+      upColor: "#0a9b6f", downColor: "#e23a4f", borderVisible: false,
+      wickUpColor: "#0a9b6f", wickDownColor: "#e23a4f"
+    });
+    series.setData(agg);
+  }
+  ui.ch.series = series;
+  const snap = ts => { let best = null; for (const b of agg) if (b.time <= ts) best = b.time; return best; };
+  const markers = [];
+  state.trades.filter(t => t.sym === sym).forEach(t => {
+    const en = tsOf(t.replay && t.replay.entry), ex = tsOf(t.replay && t.replay.exit);
+    if (en != null && snap(en) != null) markers.push({ time: snap(en), position: "belowBar", color: "#4f6ef7", shape: "arrowUp", text: "In" });
+    if (ex != null && snap(ex) != null) markers.push({ time: snap(ex), position: "aboveBar", color: t.pnl >= 0 ? "#0a9b6f" : "#e23a4f", shape: "arrowDown", text: "Out" });
+  });
+  markers.sort((a, b) => a.time - b.time);
+  series.setMarkers(markers);
+  const last = agg[agg.length - 1], days = RANGE_DAYS[ui.ch.range];
+  const fromTime = days == null ? agg[0].time : Math.max(agg[0].time, last.time - days * 86400);
+  if (days == null) chart.timeScale().fitContent();
+  else chart.timeScale().setVisibleRange({ from: fromTime, to: last.time });
+  const start = agg.find(b => b.time >= fromTime) || agg[0];
+  const chg = (last.close - start.open) / start.open * 100;
+  $("#chPrice").textContent = last.close.toFixed(2);
+  const cEl = $("#chChg");
+  cEl.textContent = `${chg >= 0 ? "+" : ""}${chg.toFixed(2)}% in range`;
+  cEl.className = chg >= 0 ? "pos" : "neg";
+  const legend = $("#chLegend");
+  legend.textContent = `O ${last.open} H ${last.high} L ${last.low} C ${last.close}`;
+  chart.subscribeCrosshairMove(p => {
+    if (!p.time || !p.seriesData) return;
+    const d = p.seriesData.get(series);
+    if (!d) return;
+    legend.textContent = d.open !== undefined ? `O ${d.open} H ${d.high} L ${d.low} C ${d.close}` : `Close ${d.value}`;
+  });
+}
+function destroyCharts() {
+  if (ui.ch.chart) ui.ch.chart.remove();
+  ui.ch.chart = null;
+  ui.ch.series = null;
+}
+
+// ---------- progress tracker ----------
+const PROG_STAGES = [["prepare", "Prepare"], ["trade", "Trade"], ["reflect", "Reflect"], ["habit", "Habit goals"]];
+const DEFAULT_RULES = [
+  { id: "r1", stage: "prepare", text: "Session started on time" },
+  { id: "r2", stage: "prepare", text: "Reviewed the higher timeframe" },
+  { id: "r3", stage: "prepare", text: "Wrote the plan before the open" },
+  { id: "r4", stage: "trade", text: "Only traded my entry model" },
+  { id: "r5", stage: "trade", text: "Risk stayed within my limit" },
+  { id: "r6", stage: "trade", text: "Stopped at my maximum trade count" },
+  { id: "r7", stage: "reflect", text: "Journaled the session" },
+  { id: "r8", stage: "reflect", text: "Logged a reflection for each trade" },
+  { id: "h1", stage: "habit", text: "Exercised" },
+  { id: "h2", stage: "habit", text: "Read for 20 minutes" },
+  { id: "h3", stage: "habit", text: "Slept 7+ hours" }
+];
+const dayAdd = (s, n) => { const d = parseISO(s); d.setDate(d.getDate() + n); return iso(d); };
+function progScore(key) {
+  if (!state.rules.length) return 0;
+  const done = state.checks[key] || {};
+  return state.rules.filter(r => done[r.id]).length / state.rules.length;
+}
+function progStreaks() {
+  const TH = 0.8, today = iso(TODAY);
+  let cur = 0, k = today;
+  if (progScore(k) < TH) k = dayAdd(k, -1);
+  while (progScore(k) >= TH) { cur++; k = dayAdd(k, -1); }
+  let best = 0, run = 0;
+  const keys = Object.keys(state.checks).sort();
+  if (keys.length) {
+    let d = keys[0];
+    while (d <= today) {
+      if (progScore(d) >= TH) { run++; best = Math.max(best, run); } else run = 0;
+      d = dayAdd(d, 1);
+    }
+  }
+  return { cur, best, TH };
+}
+const hmColor = s => (s === 0 ? "#ebedf3" : s < 0.5 ? "#cfeee3" : s < 0.8 ? "#7fd3b1" : s < 1 ? "#2fb585" : "#0a9b6f");
+
+function viewProgress() {
+  const key = ui.progDay || iso(TODAY);
+  const done = state.checks[key] || {};
+  const score = progScore(key);
+  const { cur, best, TH } = progStreaks();
+  let sum30 = 0;
+  for (let i = 0; i < 30; i++) sum30 += progScore(dayAdd(iso(TODAY), -i));
+  const avg30 = sum30 / 30;
+  const perfect = Object.keys(state.checks).filter(k => progScore(k) === 1).length;
+  const adh = state.rules.map(r => {
+    let n = 0;
+    for (let i = 0; i < 30; i++) if ((state.checks[dayAdd(iso(TODAY), -i)] || {})[r.id]) n++;
+    return { r, rate: n / 30 };
+  });
+  const end = new Date(TODAY);
+  const start = new Date(TODAY);
+  start.setDate(TODAY.getDate() - (12 * 7 - 1));
+  start.setDate(start.getDate() - ((start.getDay() + 6) % 7));
+  const cols = Math.ceil(((end - start) / 86400000 + 1) / 7);
+  let cells = "";
+  for (let c = 0; c < cols; c++) for (let r = 0; r < 7; r++) {
+    const d = new Date(start);
+    d.setDate(start.getDate() + c * 7 + r);
+    if (d > end) { cells += `<i class="hm" style="background:transparent"></i>`; continue; }
+    const k = iso(d), s = progScore(k);
+    cells += `<i class="hm" style="background:${hmColor(s)}" title="${dt(k)}: ${Math.round(s * 100)}%"></i>`;
+  }
+  const stages = PROG_STAGES.map(([id, label]) => {
+    const rules = state.rules.filter(r => r.stage === id);
+    return `<div class="stage"><div class="stage-title">${label}</div>${rules.map(r => `<div class="rule-row">
+      <button class="chk ${done[r.id] ? "on" : ""}" data-action="prog-toggle" data-id="${r.id}" aria-pressed="${!!done[r.id]}" aria-label="${escapeHTML(r.text)}">${done[r.id] ? "✓" : ""}</button>
+      <span>${escapeHTML(r.text)}</span>
+      <button class="x" data-action="prog-del-rule" data-id="${r.id}" aria-label="Remove rule">×</button></div>`).join("") || `<div class="hint">No rules in this stage.</div>`}</div>`;
+  }).join("");
+  const weekday = parseISO(key).toLocaleString("en-US", { weekday: "long" });
+  const doneCount = Object.keys(done).filter(k => done[k]).length;
+  return `<div class="prog-grid">
+    <div class="card prog-full">
+      <div class="flex" style="flex-wrap:wrap;gap:16px">
+        <div class="flex" style="gap:8px">
+          <button class="mini" data-action="prog-step" data-step="-1" aria-label="Previous day">&larr;</button>
+          <div style="min-width:170px"><div class="big-sm">${dt(key)}</div><div class="hint">${weekday}${key === iso(TODAY) ? " · today" : ""}</div></div>
+          <button class="mini" data-action="prog-step" data-step="1" aria-label="Next day">&rarr;</button>
+          ${key !== iso(TODAY) ? `<button class="mini" data-action="prog-today">Today</button>` : ""}
+        </div>
+        <div style="flex:1;min-width:240px;max-width:460px">
+          <div class="flex"><span class="label" style="margin:0">Daily score</span><b class="big-sm">${Math.round(score * 100)}%</b></div>
+          <div class="htrack" style="height:10px;margin-top:8px"><i style="width:${score * 100}%;background:var(--gain)"></i></div>
+          <div class="hint" style="margin-top:6px">${doneCount} of ${state.rules.length} rules done</div>
+        </div>
+      </div>
+    </div>
+    <div class="card"><h2>Checklist</h2>${stages}</div>
+    <div class="card"><h2>Consistency heat map</h2>
+      <div class="hm-grid">${cells}</div>
+      <div class="hint" style="margin-top:8px">Last 12 weeks. Darker squares mean more rules followed.</div>
+      <div class="sumline" style="margin-top:14px">
+        <div>Current streak<b>${cur} days</b></div>
+        <div>Best streak<b>${best} days</b></div>
+        <div>30-day average<b>${Math.round(avg30 * 100)}%</b></div>
+        <div>Perfect days<b>${perfect}</b></div>
+      </div>
+      <div class="hint">A streak counts days at or above ${Math.round(TH * 100)}%.</div>
+    </div>
+    <div class="card"><h2>Rule adherence, last 30 days</h2>
+      ${adh.map(({ r, rate }) => `<div class="adh-row"><span>${escapeHTML(r.text)}</span><div class="htrack"><i style="width:${rate * 100}%;background:var(--accent)"></i></div><b class="n">${Math.round(rate * 100)}%</b></div>`).join("") || `<div class="empty-note">No rules yet.</div>`}
+    </div>
+    <div class="card"><h2>Manage rules</h2>
+      <div class="sess-add" style="margin-top:0">
+        <input id="newRuleText" placeholder="New rule, e.g. Max 3 trades" aria-label="New rule">
+        <select id="newRuleStage" aria-label="Stage" style="width:auto">${PROG_STAGES.map(([id, l]) => `<option value="${id}">${l}</option>`).join("")}</select>
+        <button class="mini primary" data-action="prog-add-rule">Add</button>
+      </div>
+      <div class="hint" style="margin-top:10px">New rules appear in every day's checklist. Remove a rule with the × next to it.</div>
+    </div>
+  </div>`;
+}
+
+// ---------- right panel: accounts ----------
+function groupedAccounts() {
+  const keys = [...new Set(state.accounts.map(a => a.group || ""))]
+    .sort((x, y) => (x === "" ? 1 : y === "" ? -1 : x.localeCompare(y)));
+  return keys.map(k => ({ name: k, list: state.accounts.filter(a => (a.group || "") === k) }));
+}
+function acctMenuItems() {
+  return groupedAccounts().map(g => `${g.name ? `<div class="acct-group">${escapeHTML(g.name)}</div>` : ""}${g.list.map(a => `<button class="acct-item ${ui.accountId === a.id ? "on" : ""}" role="option" aria-selected="${ui.accountId === a.id}" data-action="select-account" data-id="${a.id}">${ui.accountId === a.id ? "&#10003; " : ""}${escapeHTML(a.name)}</button>`).join("")}`).join("");
+}
+function acctCard(a) {
+  const ts = state.trades.filter(t => t.accountId === a.id);
+  const p = sum(ts);
+  const active = ui.accountId === a.id;
+  const canDelete = !ts.length && !state.open.some(o => o.accountId === a.id);
+  const checked = ui.selected.includes(a.id);
+  return `<div class="acct-card ${active ? "active" : ""}">
+    <div class="acct-head">
+      ${ui.selectMode ? `<button class="acct-check ${checked ? "on" : ""}" data-action="acct-check" data-id="${a.id}" aria-pressed="${checked}" aria-label="Select ${escapeHTML(a.name)}">${checked ? "&#10003;" : ""}</button>` : ""}
+      <input value="${escapeHTML(a.name)}" data-account-rename="${a.id}" aria-label="Account name">
+    </div>
+    <div class="acct-meta">
+      <span>${ts.length} trades · <span class="${cls(p)}">${fmt(p)}</span></span>
+      <span class="acct-btns">
+        <button class="mini" data-action="select-account" data-id="${a.id}" ${active ? "disabled" : ""}>${active ? "Selected" : "View"}</button>
+        
+      </span>
+    </div>
+  </div>`;
+}
+function renderRightbar() {
+  $("#rightbar").innerHTML = `
+    <div class="flex" style="margin-bottom:14px"><span></span>
+      <button class="x" data-action="toggle-rb" aria-label="Close mindset panel">&times;</button></div>
+    ${mindsetHTML()}`;
+}
+function viewAccounts() {
+  const n = ui.selected.length;
+  const cards = groupedAccounts().map(g => `${g.name ? `<div class="acct-group">${escapeHTML(g.name)}</div>` : (state.accounts.some(a => a.group) ? `<div class="acct-group">Ungrouped</div>` : "")}${g.list.map(acctCard).join("")}`).join("");
+  return `<div class="card" style="max-width:760px">
+    <div class="flex" style="margin-bottom:14px"><h2 style="margin:0">Your accounts</h2>
+      <button class="mini" data-action="acct-select-mode">${ui.selectMode ? "Done" : "Select"}</button></div>
+    ${ui.selectMode ? `<div class="bulk">
+        <div class="hint" style="margin-bottom:8px">${n} selected</div>
+        <div class="sess-add" style="margin-top:0"><input id="groupName" placeholder="Group name, e.g. Prop" aria-label="Group name"><button class="mini" data-action="group-sel" ${n ? "" : "disabled"}>Group</button></div>
+        <div class="bulk-btns">
+          <button class="mini" data-action="ungroup-sel" ${n ? "" : "disabled"}>Remove group</button>
+          <button class="mini danger" data-action="delete-sel" ${n ? "" : "disabled"}>${ui.confirmBulk ? `Confirm delete (${n})` : "Delete selected"}</button>
+        </div></div>` : ""}
+    ${cards}
+    <div class="sess-add"><input id="newAccount" placeholder="New account name" aria-label="New account name"><button class="mini" data-action="add-account">Add</button></div>
+    <button class="mini" data-action="select-account" data-id="all" style="margin-top:12px;width:100%" ${ui.accountId === "all" ? "disabled" : ""}>Show all accounts</button>
+    <div class="hint" style="margin-top:10px">Tap Select to group accounts or delete several at once. Deleting removes their trades.</div>
+  </div>`;
+}
+
+// ---------- trade dialog ----------
+const dlg = $("#dlg"), form = $("#tradeForm");
+
+function renderSessionList() {
+  $("#sessionList").innerHTML = state.sessions.map(s =>
+    `<div class="sess-row"><input value="${escapeHTML(s.name)}" data-session-rename="${s.id}" aria-label="Session name"></div>`).join("");
+}
+function renderFileList() {
+  $("#fileList").innerHTML = ui.dlgFiles.map((f, i) => `<div class="file-row">
+    <span>${escapeHTML(f.name)} <span class="muted">${fileSize(f.size)}${f.data ? "" : " · name only"}</span></span>
+    <button type="button" class="x" data-action="rm-file" data-idx="${i}" aria-label="Remove ${escapeHTML(f.name)}">×</button></div>`).join("");
+}
+function openAdd(day, modelId) {
+  if (!state.accounts.length) { alert("Add an account first, then you can log trades to it."); return; }
+  form.reset();
+  ui.dlgFiles = [];
+  ui.dlgPsych = { rating: 0, tags: [] };
+  renderDlgPsych();
+  form.account.innerHTML = state.accounts.map(a => `<option value="${a.id}">${escapeHTML(a.name)}</option>`).join("");
+  form.account.value = ui.accountId !== "all" ? ui.accountId : (state.accounts[0] ? state.accounts[0].id : "");
+  form.session.innerHTML = state.sessions.map(s => `<option value="${s.id}">${escapeHTML(s.name || "Untitled session")}</option>`).join("");
+  form.model.innerHTML = `<option value="">No model</option>` + state.models.map(mo => `<option value="${mo.id}">${escapeHTML(mo.name || "Untitled")}</option>`).join("");
+  form.model.value = modelId || "";
+  form.date.value = day || ui.selectedDay || iso(TODAY);
+  renderSessionList();
+  renderFileList();
+  dlg.showModal();
+  form.sym.focus();
+}
+const readFile = f => new Promise(res => {
+  const r = new FileReader();
+  r.onload = () => res(r.result);
+  r.onerror = () => res(null);
+  r.readAsDataURL(f);
+});
+
+$("#fileInput").addEventListener("change", async e => {
+  for (const f of e.target.files) {
+    const data = f.size <= MAX_FILE_BYTES ? await readFile(f) : null;
+    ui.dlgFiles.push({ name: f.name, size: f.size, type: f.type, data });
+  }
+  e.target.value = "";
+  renderFileList();
+});
+
+form.addEventListener("submit", e => {
+  e.preventDefault();
+  const f = new FormData(form);
+  const pnl = Math.round(Number(f.get("pnl")));
+  const sym = String(f.get("sym") || "").trim().toUpperCase();
+  if (!sym || !f.get("date") || Number.isNaN(pnl)) return;
+  state.trades.push({
+    id: uid(), date: String(f.get("date")), accountId: String(f.get("account") || ""),
+    sessionId: String(f.get("session") || ""), sym, pnl,
+    modelId: String(f.get("model") || "") || null,
+    reflection: String(f.get("reflection") || "").trim(), psych: { rating: ui.dlgPsych.rating, tags: [...ui.dlgPsych.tags] }, files: ui.dlgFiles
+  });
+  ui.dlgFiles = [];
+  save();
+  dlg.close();
+  render();
+});
+dlg.addEventListener("close", () => { ui.dlgFiles = []; });
+
+// ---------- render ----------
+function render() {
+  const m = metrics(scoped());
+  const views = {
+    dashboard: () => viewDashboard(m), trades: () => viewTrades(), journal: () => viewJournal(),
+    data: () => viewData(), model: () => viewModel(), progress: () => viewProgress(), replay: () => viewReplay(), charts: () => viewCharts(), accounts: () => viewAccounts(), settings: () => viewSettings()
+  };
+  $("#view").innerHTML = views[ui.view] ? views[ui.view]() : viewPlaceholder(ui.view);
+  if (ui.view === "replay") setupReplay(); else destroyReplay();
+  if (ui.view === "charts") setupCharts(); else destroyCharts();
+  const mo = state.models.find(x => x.id === ui.modelId);
+  $("#title").textContent = ui.view === "model" ? (mo ? mo.name : "Entry model") : (NAMES[ui.view] || "");
+  $("#title").classList.toggle("big-title", ui.view === "dashboard");
+  $("#subtitle").textContent = ui.view === "dashboard" ? `${scoped().length} trades · ${ui.accountId === "all" ? "all accounts" : accountName(ui.accountId)}` : "";
+  document.querySelectorAll("[data-action='view']").forEach(a =>
+    a.classList.toggle("on", a.dataset.view === ui.view || (ui.view === "model" && a.dataset.view === "data")));
+  document.body.classList.toggle("rb-open", ui.rbOpen);
+  document.body.classList.toggle("signed-out", !ui.authed);
+  document.body.classList.toggle("dash-view", ui.view === "dashboard");
+  document.body.style.setProperty("--rb-w", ui.rbWidth + "px");
+  document.body.classList.toggle("side-collapsed", !ui.sideOpen);
+  const sideBtn = document.querySelector("[data-action='toggle-side']");
+  sideBtn.setAttribute("aria-expanded", String(ui.sideOpen));
+  sideBtn.setAttribute("aria-label", ui.sideOpen ? "Collapse sidebar" : "Expand sidebar");
+  $("#rbToggle").setAttribute("aria-expanded", String(ui.rbOpen));
+  if (ui.rbOpen) renderRightbar();
+  $("#symList").innerHTML = SYMS.map(s => `<option value="${s}">`).join("");
+}
+
+// ---------- resize right sidebar ----------
+(() => {
+  const handle = $("#rbHandle");
+  handle.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    handle.setPointerCapture(e.pointerId);
+    handle.classList.add("dragging");
+    const move = ev => {
+      const w = Math.min(520, Math.max(220, window.innerWidth - ev.clientX));
+      ui.rbWidth = w;
+      document.body.style.setProperty("--rb-w", w + "px");
+    };
+    const up = () => {
+      handle.classList.remove("dragging");
+      handle.removeEventListener("pointermove", move);
+      handle.removeEventListener("pointerup", up);
+      handle.removeEventListener("pointercancel", up);
+    };
+    handle.addEventListener("pointermove", move);
+    handle.addEventListener("pointerup", up);
+    handle.addEventListener("pointercancel", up);
+  });
+})();
+
+// ---------- events ----------
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-action]");
+  if (!el || el.disabled) return;
+  e.preventDefault();
+  const a = el.dataset.action;
+  if (a === "view") { ui.view = el.dataset.view; if (ui.view !== "trades") ui.filter = null; }
+  else if (a === "add") openAdd(el.dataset.day, el.dataset.model);
+  else if (a === "cancel") dlg.close();
+  else if (a === "add-session") {
+    const input = $("#newSession");
+    const name = input.value.trim();
+    if (!name) return;
+    const s = { id: uid(), name };
+    state.sessions.push(s); save();
+    form.session.insertAdjacentHTML("beforeend", `<option value="${s.id}">${escapeHTML(name)}</option>`);
+    form.session.value = s.id;
+    input.value = "";
+    renderSessionList();
+  }
+  else if (a === "rm-file") { ui.dlgFiles.splice(Number(el.dataset.idx), 1); renderFileList(); }
+  else if (a === "logout") { rpStop(); if (sb) sb.auth.signOut(); cloudUser = null; ui.authed = false; }
+  else if (a === "forgot") { forgotPassword(); return; }
+  else if (a === "toggle-mode") {
+    ui.authMode = ui.authMode === "signup" ? "login" : "signup";
+    authMsg("");
+    applyAuthMode();
+    return;
+  }
+  else if (a === "login-demo") { try { localStorage.setItem("vz-session", "demo"); } catch (err) {} ui.authed = true; }
+  else if (a === "go-login") { document.getElementById("loginForm").scrollIntoView({ behavior: "smooth" }); }
+  else if (a === "ch-tf") ui.ch.tf = el.dataset.v;
+  else if (a === "ch-range") ui.ch.range = el.dataset.v;
+  else if (a === "ch-type") ui.ch.type = el.dataset.v;
+  else if (a === "rp-toggle") {
+    if (ui.rp.playing) rpStop();
+    else {
+      if (ui.rp.idx >= rpBars().length - 1) ui.rp.idx = 0;
+      rpStart();
+    }
+  }
+  else if (a === "rp-step") {
+    rpStop();
+    ui.rp.idx = Math.max(0, Math.min(rpBars().length - 1, ui.rp.idx + Number(el.dataset.step)));
+  }
+  else if (a === "rp-reset") { rpStop(); ui.rp.idx = 0; }
+  else if (a === "prog-step") {
+    const base = parseISO(ui.progDay || iso(TODAY));
+    base.setDate(base.getDate() + Number(el.dataset.step));
+    const next = iso(base);
+    ui.progDay = next > iso(TODAY) ? iso(TODAY) : next;
+  }
+  else if (a === "prog-today") ui.progDay = "";
+  else if (a === "prog-toggle") {
+    const k = ui.progDay || iso(TODAY);
+    const day = state.checks[k] || (state.checks[k] = {});
+    day[el.dataset.id] = !day[el.dataset.id];
+    if (!day[el.dataset.id]) delete day[el.dataset.id];
+    save();
+  }
+  else if (a === "prog-add-rule") {
+    const text = $("#newRuleText").value.trim();
+    if (text) { state.rules.push({ id: uid(), text, stage: $("#newRuleStage").value }); save(); }
+  }
+  else if (a === "prog-del-rule") { state.rules = state.rules.filter(r => r.id !== el.dataset.id); save(); }
+  else if (a === "reset-sample") {
+    state.trades = seed(state.sessions, state.accounts[0] ? state.accounts[0].id : "");
+    ui.selectedDay = null; ui.filter = null; save();
+  }
+  else if (a === "range-all") { ui.rangeFrom = ""; ui.rangeTo = ""; }
+  else if (a === "range-preset") {
+    const p = el.dataset.preset, end = new Date(TODAY);
+    let start;
+    if (p === "30d") { start = new Date(TODAY); start.setDate(start.getDate() - 29); }
+    else if (p === "month") start = new Date(TODAY.getFullYear(), TODAY.getMonth(), 1);
+    else start = new Date(TODAY.getFullYear(), 0, 1);
+    ui.rangeFrom = iso(start);
+    ui.rangeTo = iso(end);
+  }
+  else if (a === "import") { $("#csvInput").click(); return; }
+  else if (a === "toggle-side") ui.sideOpen = !ui.sideOpen;
+  else if (a === "toggle-rb") ui.rbOpen = !ui.rbOpen;
+  else if (a === "select-account") { ui.accountId = el.dataset.id; ui.filter = null; ui.acctOpen = false; ui.view = "dashboard"; }
+  else if (a === "acct-menu") { ui.acctOpen = !ui.acctOpen; }
+  else if (a === "add-account") {
+    const input = $("#newAccount");
+    const name = input.value.trim();
+    if (!name) return;
+    const acc = { id: uid(), name };
+    state.accounts.push(acc); save();
+    ui.accountId = acc.id;
+    input.value = "";
+  }
+  else if (a === "acct-select-mode") { ui.selectMode = !ui.selectMode; ui.selected = []; ui.confirmBulk = false; }
+  else if (a === "acct-check") {
+    const id = el.dataset.id;
+    ui.selected = ui.selected.includes(id) ? ui.selected.filter(x => x !== id) : [...ui.selected, id];
+    ui.confirmBulk = false;
+  }
+  else if (a === "group-sel") {
+    const name = String(($("#groupName") || {}).value || "").trim();
+    if (!name) { alert("Type a group name first, for example Prop."); return; }
+    state.accounts.forEach(x => { if (ui.selected.includes(x.id)) x.group = name; });
+    ui.selected = []; ui.selectMode = false; save();
+  }
+  else if (a === "ungroup-sel") {
+    state.accounts.forEach(x => { if (ui.selected.includes(x.id)) x.group = ""; });
+    ui.selected = []; ui.selectMode = false; save();
+  }
+  else if (a === "delete-sel") {
+    if (!ui.selected.length) return;
+    if (!ui.confirmBulk) { ui.confirmBulk = true; }
+    else {
+      const ids = ui.selected;
+      state.trades = state.trades.filter(t => !ids.includes(t.accountId));
+      state.open = state.open.filter(o => !ids.includes(o.accountId));
+      state.accounts = state.accounts.filter(x => !ids.includes(x.id));
+      if (ids.includes(ui.accountId)) ui.accountId = "all";
+      ui.selected = []; ui.confirmBulk = false; ui.selectMode = false; save();
+    }
+  }
+  else if (a === "del-account-sel") {
+    const acc = state.accounts.find(x => x.id === ui.accountId);
+    if (!acc) { alert("Select an account first, then click Delete."); return; }
+    if (ui.confirmAcct !== acc.id) { ui.confirmAcct = acc.id; }
+    else {
+      state.trades = state.trades.filter(t => t.accountId !== acc.id);
+      state.open = state.open.filter(o => o.accountId !== acc.id);
+      state.accounts = state.accounts.filter(x => x.id !== acc.id);
+      ui.accountId = "all"; ui.confirmAcct = null;
+      save();
+    }
+  }
+  else if (a === "del-account") {
+    const id = el.dataset.id;
+    state.accounts = state.accounts.filter(x => x.id !== id);
+    if (ui.accountId === id) ui.accountId = "all";
+    save();
+  }
+  else if (a === "dlg-rate") { ui.dlgPsych.rating = Number(el.dataset.v); renderDlgPsych(); }
+  else if (a === "dlg-tag") {
+    const t = el.dataset.tag, arr = ui.dlgPsych.tags;
+    ui.dlgPsych.tags = arr.includes(t) ? arr.filter(x => x !== t) : [...arr, t];
+    renderDlgPsych();
+  }
+  else if (a === "tip") { ui.tip = ui.tip === el.dataset.tip ? null : el.dataset.tip; ui.tipIdx = Math.floor(Math.random() * 50); }
+  else if (a === "next-tip") ui.tipIdx = (ui.tipIdx + 1) % tipPool().length;
+  else if (a === "next-quote") ui.quoteIdx = (ui.quoteIdx + 1) % QUOTES.length;
+  else if (a === "psych-mood") { const p = psychToday(); const v = Number(el.dataset.v); p.mood = p.mood === v ? 0 : v; save(); }
+  else if (a === "psych-emotion") {
+    const p = psychToday(), x = el.dataset.e;
+    p.emotions = p.emotions.includes(x) ? p.emotions.filter(y => y !== x) : [...p.emotions, x];
+    save();
+  }
+  else if (a === "today") { ui.view = "journal"; ui.selectedDay = iso(TODAY); }
+  else if (a === "del") { state.trades = state.trades.filter(t => t.id !== el.dataset.id); save(); }
+  else if (a === "filter") { ui.filter = el.dataset.sym; ui.view = "trades"; }
+  else if (a === "clear-filter") ui.filter = null;
+  else if (a === "day") { ui.selectedDay = ui.selectedDay === el.dataset.day ? null : el.dataset.day; ui.confirmDay = null; }
+  else if (a === "del-day") {
+    const day = el.dataset.day;
+    if (ui.confirmDay !== day) ui.confirmDay = day;
+    else {
+      state.trades = state.trades.filter(t => !(t.date === day && inScope(t)));
+      ui.confirmDay = null;
+      save();
+    }
+  }
+  else if (a === "tab") ui.dashTab = el.dataset.tab;
+  else if (a === "prev") { ui.calM--; if (ui.calM < 0) { ui.calM = 11; ui.calY--; } }
+  else if (a === "next") { ui.calM++; if (ui.calM > 11) { ui.calM = 0; ui.calY++; } }
+  else if (a === "export") exportCSV();
+  else if (a === "close-open") {
+    const o = state.open.find(x => x.id === el.dataset.id);
+    if (o) {
+      state.trades.push({
+        id: uid(), date: iso(TODAY), accountId: o.accountId, sessionId: state.sessions[0] ? state.sessions[0].id : "",
+        sym: o.sym, pnl: o.pl, modelId: null, reflection: "", files: []
+      });
+      state.open = state.open.filter(x => x.id !== o.id);
+      save();
+    }
+  }
+  else if (a === "new-model") {
+    const id = uid();
+    state.models.push({ id, name: "New entry model", description: "" });
+    ui.modelId = id; ui.view = "model"; save();
+  }
+  else if (a === "open-model") { ui.modelId = el.dataset.id; ui.view = "model"; }
+  else if (a === "back-data") { ui.view = "data"; ui.modelId = null; }
+  else if (a === "del-model") {
+    const id = ui.modelId;
+    state.models = state.models.filter(x => x.id !== id);
+    state.trades.forEach(t => { if (t.modelId === id) t.modelId = null; });
+    ui.view = "data"; ui.modelId = null; save();
+  }
+  render();
+});
+
+document.addEventListener("change", e => {
+  if (e.target.dataset.chSym !== undefined) { ui.ch.sym = e.target.value; render(); return; }
+  if (e.target.id === "rpCsv") { loadCandles(e.target.files[0]); e.target.value = ""; return; }
+  if (e.target.dataset.rpTrade !== undefined) { ui.rp.tradeId = e.target.value; ui.rp.idx = 0; rpStop(); render(); return; }
+  if (e.target.dataset.rpSpeed !== undefined) { ui.rp.speed = Number(e.target.value); if (ui.rp.playing) rpStart(); render(); return; }
+  if (e.target.dataset.rpTime !== undefined) {
+    const t = rpCurrentTrade();
+    if (t) { t.replay = t.replay || {}; t.replay[e.target.dataset.rpTime] = e.target.value; save(); }
+    render();
+    return;
+  }
+  if (e.target.dataset.range) {
+    if (e.target.dataset.range === "from") ui.rangeFrom = e.target.value;
+    else ui.rangeTo = e.target.value;
+    render();
+    return;
+  }
+  if (e.target.dataset.acctSelect !== undefined) {
+    ui.accountId = e.target.value;
+    render();
+  }
+});
+
+document.addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches("[role=button],[role=tab]")) {
+    e.preventDefault(); e.target.click();
+  }
+});
+
+document.addEventListener("input", e => {
+  const t = e.target;
+  if (t.dataset.note) { state.notes[t.dataset.note] = t.value; save(); return; }
+  if (t.dataset.model) {
+    const mo = state.models.find(x => x.id === t.dataset.model);
+    if (mo) {
+      mo[t.dataset.field] = t.value;
+      if (t.dataset.field === "name") $("#title").textContent = t.value || "Entry model";
+      save();
+    }
+    return;
+  }
+  if (t.dataset.sessionRename) {
+    const s = state.sessions.find(x => x.id === t.dataset.sessionRename);
+    if (s) {
+      s.name = t.value;
+      const opt = form.session.querySelector(`option[value="${s.id}"]`);
+      if (opt) opt.textContent = t.value || "Untitled session";
+      save();
+    }
+    return;
+  }
+  if (t.dataset.rpSeek !== undefined) { rpStop(); ui.rp.idx = Number(t.value); updateReplayChart(false); return; }
+  if (t.dataset.psychNote !== undefined) { psychToday().note = t.value; save(); return; }
+  if (t.dataset.accountRename) {
+    const acc = state.accounts.find(x => x.id === t.dataset.accountRename);
+    if (acc) {
+      acc.name = t.value;
+      document.querySelectorAll(`option[value="${acc.id}"]`).forEach(o => o.textContent = t.value || "Untitled account");
+      save();
+    }
+  }
+});
+
+$("#csvInput").addEventListener("change", async e => {
+  const file = e.target.files[0];
+  e.target.value = "";
+  if (!file) return;
+  const text = await file.text();
+  const accountId = ui.accountId !== "all" ? ui.accountId : (state.accounts[0] || {}).id;
+  const sessionId = (state.sessions[0] || {}).id || "";
+  let added = 0, skipped = 0;
+  text.split(/\r?\n/).forEach(line => {
+    if (!line.trim() || /^\s*date/i.test(line)) return;
+    const cols = line.split(",").map(c => c.trim().replace(/^"|"$/g, ""));
+    const [date, sym, pnlRaw] = cols;
+    const pnl = Math.round(Number(pnlRaw));
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date || "") || !sym || Number.isNaN(pnl)) { skipped++; return; }
+    state.trades.push({ id: uid(), date, accountId, sessionId, sym: sym.toUpperCase(), pnl, modelId: null, reflection: "", files: [] });
+    added++;
+  });
+  state.lastImport = `Last import: ${added} trades from ${file.name}${skipped ? ", " + skipped + " rows skipped" : ""}`;
+  save();
+  render();
+});
+
+function exportCSV() {
+  const q = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const rows = scoped().sort((a, b) => (a.date < b.date ? -1 : 1)).map(t =>
+    [t.date, accountName(t.accountId), sessionName(t.sessionId), t.sym, modelName(t.modelId), t.pnl, t.files.length, t.reflection].map(q).join(","));
+  const blob = new Blob([["date,account,session,symbol,entry_model,net_pnl,files,reflection", ...rows].join("\n")], { type: "text/csv" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "vz-trades.csv";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+}
+
+// ---------- cloud sync (Supabase) ----------
+// Each trade, account, session, model, rule, note, check-in, and daily check is one row
+// in public.journal_items, owned by the signed-in user (enforced by row-level security).
+const SB_URL = "https://grpwllholjyvdbdbjvfr.supabase.co";
+const SB_KEY = "sb_publishable_RQwOxZWccS_6cVajqMoB9g_ga5AyF6w";
+const sb = (window.supabase && window.supabase.createClient) ? window.supabase.createClient(SB_URL, SB_KEY) : null;
+let cloudUser = null, cloudTimer = null, cloudBusy = false;
+
+function toRows() {
+  const rows = [];
+  const add = (kind, arr) => (arr || []).forEach(x => rows.push({ kind, item_id: String(x.id), data: x }));
+  add("trade", state.trades); add("open", state.open); add("account", state.accounts);
+  add("session", state.sessions); add("model", state.models); add("rule", state.rules); add("psych", state.psych);
+  Object.keys(state.notes || {}).forEach(d => rows.push({ kind: "note", item_id: d, data: { text: state.notes[d] } }));
+  Object.keys(state.checks || {}).forEach(d => rows.push({ kind: "check", item_id: d, data: state.checks[d] }));
+  return rows;
+}
+
+function scheduleCloudSave() {
+  if (!cloudUser) return;
+  clearTimeout(cloudTimer);
+  cloudTimer = setTimeout(cloudPush, 900);
+}
+
+async function cloudPush() {
+  if (!sb || !cloudUser) return;
+  if (cloudBusy) { scheduleCloudSave(); return; }
+  cloudBusy = true;
+  try {
+    const now = new Date().toISOString();
+    const rows = toRows().map(r => ({ ...r, user_id: cloudUser.id, updated_at: now }));
+    for (let i = 0; i < rows.length; i += 500) {
+      const { error } = await sb.from("journal_items").upsert(rows.slice(i, i + 500), { onConflict: "user_id,kind,item_id" });
+      if (error) throw error;
+    }
+    // Remove cloud rows for items that were deleted locally
+    const { data: existing, error: selErr } = await sb.from("journal_items").select("kind,item_id");
+    if (selErr) throw selErr;
+    const keep = new Set(rows.map(r => r.kind + "|" + r.item_id));
+    for (const r of existing.filter(r => !keep.has(r.kind + "|" + r.item_id))) {
+      await sb.from("journal_items").delete().eq("kind", r.kind).eq("item_id", r.item_id);
+    }
+  } catch (err) {
+    alert("Could not save to your account: " + (err.message || err));
+  } finally {
+    cloudBusy = false;
+  }
+}
+
+async function cloudLoad() {
+  const { data, error } = await sb.from("journal_items").select("kind,item_id,data");
+  if (error) throw error;
+  const pick = k => data.filter(r => r.kind === k).map(r => r.data);
+  state.trades = pick("trade"); state.open = pick("open"); state.accounts = pick("account");
+  state.sessions = pick("session"); state.models = pick("model"); state.rules = pick("rule"); state.psych = pick("psych");
+  state.notes = {}; data.filter(r => r.kind === "note").forEach(r => { state.notes[r.item_id] = r.data.text; });
+  state.checks = {}; data.filter(r => r.kind === "check").forEach(r => { state.checks[r.item_id] = r.data; });
+  if (!state.sessions.length) state.sessions = DEFAULT_SESSIONS.map(name => ({ id: uid(), name }));
+  state.rulesInit = true;
+}
+
+// First sign-in: if the account already has data, load it. If the account is empty,
+// upload what this browser has (this is how your current journal moves to the account).
+async function cloudStart(user) {
+  cloudUser = user;
+  const { count, error } = await sb.from("journal_items").select("*", { count: "exact", head: true });
+  if (error) throw error;
+  if (count > 0) await cloudLoad();
+  else await cloudPush();
+  ui.authed = true;
+  render();
+}
+
+const AUTH_ERRORS = {
+  "Invalid login credentials": "Email or password is incorrect. Check both, or click Create account if you don't have one yet.",
+  "Email not confirmed": "Your email isn't confirmed yet. Click the link in the confirmation email, then log in.",
+  "User already registered": "An account with this email already exists. Click Log in instead.",
+  "Password should be at least 6 characters.": "Your password must be at least 6 characters.",
+  "Unable to validate email address: invalid format": "That doesn't look like a valid email address.",
+  "For security purposes, you can only request this after a few seconds.": "Please wait a few seconds before trying again."
+};
+function authMsg(text, ok = false) {
+  const el = $("#authMsg");
+  el.textContent = text;
+  el.className = "auth-msg" + (ok ? " ok" : "");
+}
+async function cloudAuth(mode, email, password) {
+  if (!sb) { authMsg("Cloud sync could not start. Check your internet connection and reload."); return; }
+  if (mode === "signup") {
+    const { data, error } = await sb.auth.signUp({ email, password });
+    if (error) { authMsg(AUTH_ERRORS[error.message] || error.message); return; }
+    if (!data.session) { authMsg("Account created. Check your email to confirm it, then log in.", true); ui.authMode = "login"; applyAuthMode(); return; }
+    await cloudStart(data.session.user);
+  } else {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password });
+    if (error) { authMsg(AUTH_ERRORS[error.message] || error.message); return; }
+    await cloudStart(data.session.user);
+  }
+}
+async function forgotPassword() {
+  const email = String($("#loginForm").elements.email.value || "").trim();
+  if (!email) { authMsg("Type your email above first, then click Forgot password."); return; }
+  if (!sb) { authMsg("Cloud sync could not start. Check your internet connection and reload."); return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.href });
+  if (error) authMsg(AUTH_ERRORS[error.message] || error.message);
+  else authMsg("If an account exists for that email, a reset link is on its way. Check your inbox.", true);
+}
+
+// If you were already signed in last time, pick the session back up on load
+if (sb) {
+  sb.auth.getSession().then(({ data }) => {
+    if (data.session && location.hash !== "#login") cloudStart(data.session.user).catch(err => alert("Could not load your account: " + (err.message || err)));
+  });
+}
+
+// ---------- boot ----------
+state = load();
+if (!state.sessions.length) state.sessions = DEFAULT_SESSIONS.map(name => ({ id: uid(), name }));
+if (!state.rulesInit) {
+  state.rules = DEFAULT_RULES.map(r => ({ ...r, id: uid() }));
+  state.checks = state.checks || {};
+  state.rulesInit = true;
+  save();
+}
+ui.authed = false;
+ui.authMode = "login";
+function applyAuthMode() {
+  const m = ui.authMode || "login", signup = m === "signup", recovery = m === "recovery";
+  const form = $("#loginForm");
+  $("#confirmWrap").hidden = !(signup || recovery);
+  $("#emailWrap").hidden = recovery;
+  form.elements.email.required = !recovery;
+  $("#authSubmit").textContent = recovery ? "Set new password" : signup ? "Create account" : "Log in";
+  $("#altRow").hidden = recovery;
+  $("#forgotRow").hidden = signup || recovery;
+  $("#altText").textContent = signup ? "Already have an account?" : "No account?";
+  $("#altBtn").textContent = signup ? "Log in" : "Create account";
+  if (signup || recovery) form.elements.confirm.focus();
+}
+applyAuthMode();
+if (typeof sb !== "undefined" && sb) sb.auth.onAuthStateChange((event) => {
+  if (event === "PASSWORD_RECOVERY") { ui.authMode = "recovery"; applyAuthMode(); authMsg("Choose a new password for your account.", true); }
+});
+$("#loginForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const f = new FormData(e.target);
+  const email = String(f.get("email") || "").trim(), password = String(f.get("password") || "");
+  const mode = ui.authMode || "login";
+  if (!password || (mode !== "recovery" && !email)) { authMsg("Fill in every box to continue."); return; }
+  if ((mode === "signup" || mode === "recovery") && f.get("confirm") !== password) { authMsg("The two passwords do not match. Type the same password in both boxes."); return; }
+  if (mode === "recovery") {
+    if (!sb) { authMsg("Cloud sync could not start. Check your internet connection and reload."); return; }
+    const { error } = await sb.auth.updateUser({ password });
+    if (error) { authMsg(AUTH_ERRORS[error.message] || error.message); return; }
+    authMsg("Your password has been changed.", true);
+    ui.authMode = "login"; applyAuthMode();
+    const { data } = await sb.auth.getSession();
+    if (data.session) await cloudStart(data.session.user);
+    return;
+  }
+  await cloudAuth(mode, email, password);
+});
+render();
+</script>
+</body>
+</html>
